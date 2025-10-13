@@ -26,6 +26,15 @@ import Login from "./screens/login";
 import Reservas from "./screens/reservas";
 import Home from "./screens/home";
 import Registrarse from "./screens/registrarse";
+import express from 'express'
+import usuariosRouter from './routes/usuarios.js'
+
+const app = express()
+app.use(express.json())
+
+app.use('/usuarios', usuariosRouter)
+
+app.listen(3000, () => console.log('Servidor corriendo en puerto 3000'))
 
 
 function App() {
