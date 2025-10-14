@@ -1,4 +1,4 @@
-import "./styles/login.css";
+import '../screens/styles/login.css';
 import { Link } from "react-router-dom";
 
 function Login() {
