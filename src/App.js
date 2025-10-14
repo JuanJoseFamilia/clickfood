@@ -1,10 +1,12 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 
-import HomePage from './components/home.js';
-import LoginPage from './components/login.js';
-import RegisterPage from './components/registrarse.js';
+import HomePage from './components/home.jsx';
+import LoginPage from './components/login.jsx';
+import RegisterPage from './components/registrarse.jsx';
 import ReservaPage from './components/reservas.js'
+import DashboardPage from './components/dasboard.jsx'
 
 function App() {
   return (
@@ -15,6 +17,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registrarse" element={<RegisterPage />} />
         <Route path="/reservas" element={<ReservaPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
 
       </Routes>
     </div>
