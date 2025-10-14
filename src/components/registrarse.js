@@ -1,4 +1,4 @@
-import '../screens/styles/style.css';
+import '../styles/style.css';
 
 function Registrarse() {
   return (
