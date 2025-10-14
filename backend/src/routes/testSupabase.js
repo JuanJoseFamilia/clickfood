@@ -6,12 +6,12 @@ async function testConnection() {
   try {
     const { data, error } = await supabase.from('usuarios').select('*').limit(1)
     if (error) {
-      console.error('❌ Error al conectar a Supabase:', error.message)
+      console.error('Error al conectar a Supabase:', error.message)
     } else {
-      console.log('✅ Conexión exitosa. Datos de prueba:', data)
+      console.log('Conexión exitosa. Datos de prueba :', data)
     }
   } catch (err) {
-    console.error('❌ Error inesperado:', err)
+    console.error('Error inesperado:', err)
   }
 }
 

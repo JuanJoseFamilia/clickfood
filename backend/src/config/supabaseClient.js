@@ -1,8 +1,18 @@
-// backend/db/supabaseClient.js
+// backend/src/config/supabaseClient.js
+import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
 
-import { createClient } from '@supabase/supabase-js'
+// Cargar el archivo .env desde la raíz
+dotenv.config({ path: "./.env" });
 
-//Tener la url y el key en variables de entrono
-const supabaseUrl = 'https://onosbhtrwowqkjfqzwza.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ub3NiaHRyd293cWtqZnF6d3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyOTE1MDUsImV4cCI6MjA3NTg2NzUwNX0.P-5vedhV238eEVL9ayYdfrKFvP3JrKMqT4KPtFePITs'
-export const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseUrl = process.env.supabaseUrl;
+const supabaseKey = process.env.supabaseKey;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error("No se encontraron las variables SUPABASE_URL o SUPABASE_KEY");
+  console.log("Valor SUPABASE_URL:", supabaseUrl);
+  console.log("Valor SUPABASE_KEY:", supabaseKey ? "Oculto por seguridad" : "No definida");
+  process.exit(1);
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
