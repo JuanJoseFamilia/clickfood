@@ -7,14 +7,38 @@ export default function RegisterPage() {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [mensaje, setMensaje] = useState('');
 
-  const handleRegister = () => {
-    console.log('Register:', { username, registerEmail, registerPassword });
-  };
+  const handleRegister = async (e) => {
+    e.preventDefault(); // Previene recarga de página al enviar el form
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleRegister();
+    const body = {
+      nombre: username,
+      email: registerEmail,
+      contraseña: registerPassword,
+      rol: "cliente"
+    };
+
+    try {
+      const res = await fetch("http://localhost:5000/usuarios/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMensaje("Registro exitoso, ya puedes iniciar sesion.");
+        setUsername('');
+        setRegisterEmail('');
+        setRegisterPassword('');
+      } else {
+        setMensaje(`${data.error}`);
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setMensaje("Error al conectar con el servidor.");
     }
   };
 
@@ -40,70 +64,80 @@ export default function RegisterPage() {
               <h1 className="text-4xl font-bold text-white">Crear cuenta</h1>
             </div>
 
-            {/* Username Input */}
-            <div className="relative mb-4">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+            <form onSubmit={handleRegister} className="w-full">
+              {/* Username Input */}
+              <div className="relative mb-4">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Tu usuario"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                />
               </div>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Tu usuario"
-                className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
 
-            {/* Email Input */}
-            <div className="relative mb-4">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+              {/* Email Input */}
+              <div className="relative mb-4">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="email"
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  placeholder="tu@correo.com"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                />
               </div>
-              <input
-                type="email"
-                value={registerEmail}
-                onChange={(e) => setRegisterEmail(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="tu@correo.com"
-                className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
 
-            {/* Password Input */}
-            <div className="relative mb-6">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+              {/* Password Input */}
+              <div className="relative mb-6">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <input
+                  type={showRegisterPassword ? 'text' : 'password'}
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-12 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                >
+                  {showRegisterPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
-              <input
-                type={showRegisterPassword ? 'text' : 'password'}
-                value={registerPassword}
-                onChange={(e) => setRegisterPassword(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="••••••••"
-                className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-12 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+
+              {/* Register Button */}
               <button
-                onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                type="submit"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-lg transition duration-200"
               >
-                {showRegisterPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                Crear cuenta
               </button>
-            </div>
 
-            {/* Register Button */}
-            <button
-              onClick={handleRegister}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-lg transition duration-200"
-            >
-              Crear cuenta
-            </button>
+              {/* Mensaje */}
+              {mensaje && (
+                <p className="mt-4 text-center text-white">
+                  {mensaje}
+                </p>
+              )}
+            </form>
 
             {/* Back to Login Link */}
             <div className="mt-8 text-center">
@@ -113,7 +147,7 @@ export default function RegisterPage() {
                   onClick={() => window.location.href = '/login'}
                   className="text-orange-500 hover:text-orange-400 font-semibold transition bg-none border-none cursor-pointer"
                 >
-                  Inicia sesión aquí
+                  Inicia sesión aqui
                 </button>
               </p>
             </div>

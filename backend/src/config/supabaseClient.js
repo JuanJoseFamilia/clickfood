@@ -2,7 +2,7 @@
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
-// Cargar el archivo .env desde la raíz
+// Cargar el archivo .env desde la raiz
 dotenv.config({ path: "./.env" });
 
 const supabaseUrl = process.env.supabaseUrl;

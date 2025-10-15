@@ -11,10 +11,10 @@ import DashboardPage from './components/dasboard.jsx'
 function App() {
   return (
     <div>
-      {/* <Navbar />  <-- BORRA ESTA LÍNEA */}
+      {}
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/registrarse" element={<RegisterPage />} />
         <Route path="/reservas" element={<ReservaPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />

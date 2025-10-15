@@ -8,7 +8,7 @@ async function testConnection() {
     if (error) {
       console.error('Error al conectar a Supabase:', error.message)
     } else {
-      console.log('Conexión exitosa. Datos de prueba :', data)
+      console.log('Conexion exitosa. Datos de prueba :', data)
     }
   } catch (err) {
     console.error('Error inesperado:', err)
