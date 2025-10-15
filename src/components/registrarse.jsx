@@ -144,7 +144,7 @@ export default function RegisterPage() {
               <p className="text-gray-300">
                 ¿Ya tienes cuenta?{' '}
                 <button 
-                  onClick={() => window.location.href = '/login'}
+                  onClick={() => window.location.href = '/'}
                   className="text-orange-500 hover:text-orange-400 font-semibold transition bg-none border-none cursor-pointer"
                 >
                   Inicia sesión aqui

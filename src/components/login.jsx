@@ -1,3 +1,4 @@
+// src/components/login.jsx
 import '../styles/index.css';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -6,9 +7,50 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [mensaje, setMensaje] = useState('');
+  const [cargando, setCargando] = useState(false);
 
-  const handleLogin = () => {
-    console.log('Login:', { email, password });
+  const handleLogin = async (e) => {
+    if (e) e.preventDefault();
+    
+    setCargando(true);
+    setMensaje('');
+
+    const body = {
+      email: email,
+      contraseña: password
+    };
+
+    try {
+      const res = await fetch("http://localhost:5000/usuarios/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMensaje("¡Login exitoso! Redirigiendo...");
+    
+        console.log('Usuario:', data.usuario);
+        
+        // Guardar datos del usuario en sessionStorage
+        sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+        
+        // Redirigir al dashboard
+        setTimeout(() => {
+          window.location.href = '/dasboard';
+        }, 1000);
+      } else {
+        setMensaje(data.error || "Error al iniciar sesión");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setMensaje("Error al conectar con el servidor.");
+    } finally {
+      setCargando(false);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -39,74 +81,85 @@ export default function LoginPage() {
               <h1 className="text-4xl font-bold text-white">Inicia sesión</h1>
             </div>
 
-            {/* Email Input */}
-            <div className="relative mb-4">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+            <form onSubmit={handleLogin} className="w-full">
+              {/* Email Input */}
+              <div className="relative mb-4">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="juan@example.com"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                  disabled={cargando}
+                />
               </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="juan@example.com"
-                className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
 
-            {/* Password Input */}
-            <div className="relative mb-4">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+              {/* Password Input */}
+              <div className="relative mb-4">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="••••••••"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-12 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                  disabled={cargando}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="••••••••"
-                className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-12 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+
+              {/* Forgot Password Link */}
+              <div className="text-right mb-6">
+                <button type="button" className="text-gray-300 text-sm hover:text-orange-500 transition">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
+              {/* Login Button */}
               <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                type="submit"
+                disabled={cargando}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {cargando ? 'Iniciando sesión...' : 'Iniciar sesión'}
               </button>
-            </div>
 
-            {/* Forgot Password Link */}
-            <div className="text-right mb-6">
-              <button className="text-gray-300 text-sm hover:text-orange-500 transition">
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
-
-            {/* Login Button */}
-            <button
-              onClick={handleLogin}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-lg transition duration-200"
-            >
-              Iniciar sesión
-            </button>
+              {/* Mensaje */}
+              {mensaje && (
+                <p className={`mt-4 text-center ${mensaje.includes('exitoso') ? 'text-green-400' : 'text-red-400'}`}>
+                  {mensaje}
+                </p>
+              )}
+            </form>
 
             {/* Sign Up Link */}
             <div className="mt-8 text-center">
               <p className="text-gray-300">
                 ¿No tiene cuenta?{' '}
-
-                
-                
-                
-                <a href="/registrarse" target="_blank" rel="noopener noreferrer">
-         <button  className="text-orange-500 hover:text-orange-400 font-semibold transition" type="button">
-          Regístrate ahora
-         </button>
-        </a>
+                <a href="/registrarse">
+                  <button className="text-orange-500 hover:text-orange-400 font-semibold transition" type="button">
+                    Regístrate ahora
+                  </button>
+                </a>
               </p>
             </div>
           </div>

@@ -1,8 +1,32 @@
+// src/components/dashboard.jsx
 import '../styles/index.css';
 import { BarChart, Bar, XAxis, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { FileText, DollarSign, Users, CreditCard, Plus, AlertTriangle, ChevronRight } from 'lucide-react';
+import { FileText, DollarSign, Users, CreditCard, Plus, AlertTriangle, ChevronRight, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 function App() {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [usuario, setUsuario] = useState(null);
+
+  // Cargar datos del usuario al montar el componente
+  useEffect(() => {
+    const usuarioData = sessionStorage.getItem('usuario');
+    if (usuarioData) {
+      setUsuario(JSON.parse(usuarioData));
+    } else {
+      // Si no hay datos de usuario, redirigir al login
+      window.location.href = '/';
+    }
+  }, []);
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    // Limpiar datos del usuario
+    sessionStorage.removeItem('usuario');
+    console.log('Cerrando sesión...');
+    window.location.href = '/';
+  };
+
   // Datos para las gráficas
   const dailySalesData = [
     { day: 'L', sales: 220 },
@@ -59,12 +83,12 @@ function App() {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Barra lateral izquierda */}
-      <div className="w-48 bg-gray-900 text-white p-4">
+      <div className="w-48 bg-gray-900 text-white p-4 flex flex-col">
         <div className="flex items-center gap-2 mb-8">
           <div className="text-orange-500 text-2xl font-bold">ClickFood</div>
         </div>
 
-        <nav className="space-y-2">
+        <nav className="space-y-2 flex-1">
           <button className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-800 transition-colors text-left">
             <Plus size={20} className="text-emerald-400" />
             <span className="text-sm">Agregar pedido</span>
@@ -86,6 +110,15 @@ function App() {
             <span className="text-sm">Reporte general</span>
           </button>
         </nav>
+
+        {/* Botón de Logout */}
+        <button 
+          onClick={() => setShowLogoutConfirm(true)}
+          className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-red-600 bg-red-500 transition-colors text-left mt-4"
+        >
+          <LogOut size={20} />
+          <span className="text-sm font-medium">Cerrar sesión</span>
+        </button>
       </div>
 
       {/* Contenido principal */}
@@ -93,11 +126,18 @@ function App() {
         {/* Encabezado */}
         <header className="bg-white shadow-sm p-6 flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-800">
-            👋 Bienvenido, Admin Juan José
+            👋 Bienvenido, {usuario ? usuario.nombre : 'Cargando...'}
           </h1>
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
             <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-medium">320</span>
+            <button 
+              onClick={() => setShowLogoutConfirm(true)}
+              className="text-gray-600 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-gray-100"
+              title="Cerrar sesión"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </header>
 
@@ -280,6 +320,39 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación de logout */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <LogOut className="text-red-500" size={24} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Cerrar sesión</h2>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              ¿Estás seguro de que deseas cerrar sesión? Tendrás que volver a iniciar sesión para acceder al dashboard.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
