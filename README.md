@@ -1,70 +1,131 @@
-# Getting Started with Create React App
+ClickFood: Sistema de Gestión de Restaurantes 
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Descripción del Proyecto
 
-## Available Scripts
+ClickFood es un sistema integral de gestión de restaurantes (Point of Sale, POS, y Backend Dashboard) diseñado para optimizar las operaciones diarias, desde la toma de pedidos y la gestión de inventario hasta la administración de usuarios y la centralización de datos en tiempo real.
 
-In the project directory, you can run:
+Este proyecto sigue una arquitectura de Microservicios API-First, utilizando tecnologías modernas de JavaScript tanto en el Frontend como en el Backend.
 
-### `npm start`
+Tecnologías Utilizadas
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Componente
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Tecnología
 
-### `npm test`
+Descripción
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Frontend
+-React + Tailwind CSS
+-Interfaz de usuario moderna, modular y completamente responsiva, utilizando componentes funcionales y hooks.
+-Gráficos
+-Recharts
 
-### `npm run build`
+Visualización de datos en el Dashboard (ventas diarias, categorías).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Backend
+-Node.js + Express
+-Servidor API RESTful construido sobre un entorno de Módulos ES (import/export).
+-Base de Datos
+-PostgreSQL vía Supabase
+-Base de datos relacional robusta con servicios de autenticación y funciones de backend.
+-ORM/Cliente
+-Supabase Client
+-Manejo directo de la comunicación y consultas SQL (PostgREST) a la base de datos.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
+Estructura de la Aplicación
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+El proyecto se divide en dos directorios principales: frontend (React) y backend (Node/Express).
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Backend (/backend)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+-index.js: Punto de entrada del servidor. Configura Express, Cors y enlaza todas las rutas con sus respectivos prefijos (ej: /pedidos).
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+-/src/routes: Define los endpoints de la API (ej: /pedidos, /usuarios). Usa router.get('/', ...) y router.patch('/:id', ...)
 
-## Learn More
+-/src/controllers: Contiene la lógica de negocio. Recibe el req, valida los datos y llama al Modelo.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+-/src/models: Capa de datos. Contiene la lógica de Supabase (CRUD) para interactuar directamente con las tablas (ej: Pedido.crear()).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+-/config/supabase.js: Archivo de inicialización del cliente de Supabase.
 
-### Code Splitting
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
 
-### Analyzing the Bundle Size
+Frontend (/frontend/src/)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+dashboard.jsx: Componente principal que maneja el layout y el estado de la navegación.
 
-### Making a Progressive Web App
+CRUDModal (función): Componente genérico y reutilizable que maneja la interfaz de creación, lectura, edición y eliminación (CRUD) para todas las entidades (Pedidos, Mesas, Usuarios, etc.).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
 
-### Advanced Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Funcionalidades Clave Implementadas
 
-### Deployment
+El sistema proporciona una administración completa de los recursos principales del restaurante:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1-Gestión de Usuarios (CRUD):
 
-### `npm run build` fails to minify
+    -Permite crear, leer, actualizar y eliminar usuarios.
+    -Dropdown de Rol: Centraliza la asignación de roles (cliente, empleado, administrador).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+2-Gestión de Empleados (CRUD):
+
+    -Maneja datos específicos del empleado (id_usuario, puesto, salario).
+
+3-Gestión de Mesas (CRUD):
+
+    -Dropdown de Estado: Permite cambiar el estado de la mesa (Disponible, Reservada) fácilmente.
+
+4-Gestión de Pedidos (CRUD):
+
+    -Integración completa con la tabla pedidos de PostgreSQL.
+
+    -Dropdown de Estado: Permite cambiar el flujo del pedido (Pendiente, En preparación, Completado).
+
+    -Selector de Fecha/Hora: Usa el tipo de input datetime-local para garantizar el formato de timestamp.
+
+
+
+
+Configuración e Instalación
+
+1-Backend Setup
+
+Navega a la carpeta /backend.
+
+Instala las dependencias:
+
+npm install express cors dotenv @supabase/supabase-js bcrypt
+
+
+Crea un archivo .env en la raíz de la carpeta /backend y añade tus claves de Supabase.
+
+# .env
+SUPABASE_URL="TURL_DE_SUPABASE"
+SUPABASE_KEY="CLAVE_ANON_O_SERVICE_ROLE"
+PORT=5000
+
+
+
+Inicia el servidor:
+
+node index.js
+
+
+2-Frontend Setup (React)
+
+Navega a la carpeta /frontend.
+
+Instala las dependencias:
+
+npm install react react-dom recharts lucide-react tailwindcss postcss autoprefixer
+
+
+Inicia la aplicación:
+
+npm run dev
+
+(Abrir http://localhost:3000 en tu navegador).
+
+Desarrollado con enfoque en modularidad, escalabilidad y buenas prácticas.

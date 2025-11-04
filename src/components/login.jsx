@@ -1,4 +1,3 @@
-// src/components/login.jsx
 import '../styles/index.css';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -35,10 +34,8 @@ export default function LoginPage() {
     
         console.log('Usuario:', data.usuario);
         
-        // Guardar datos del usuario en sessionStorage
         sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
         
-        // Redirigir al dashboard
         setTimeout(() => {
           window.location.href = '/dasboard';
         }, 1000);
@@ -63,7 +60,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="flex bg-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-4xl">
         
-        {/* Left Side - Logo */}
+
         <div className="w-1/2 bg-orange-500 flex items-center justify-center p-12">
           <div className="text-center">
             <div className="text-7xl font-bold text-white mb-4">Click</div>
@@ -72,17 +69,17 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
+
         <div className="w-1/2 flex flex-col items-center justify-center px-16 py-12">
           <div className="w-full">
-            {/* Welcome Message */}
+
             <div className="mb-12">
-              <div className="text-sm text-gray-300 mb-2">👋 Bienvenido de nuevo!</div>
+              <div className="text-sm text-gray-300 mb-2">Bienvenido de nuevo!</div>
               <h1 className="text-4xl font-bold text-white">Inicia sesión</h1>
             </div>
 
             <form onSubmit={handleLogin} className="w-full">
-              {/* Email Input */}
+
               <div className="relative mb-4">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +98,6 @@ export default function LoginPage() {
                 />
               </div>
 
-              {/* Password Input */}
               <div className="relative mb-4">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,14 +123,14 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              {/* Forgot Password Link */}
+
               <div className="text-right mb-6">
                 <button type="button" className="text-gray-300 text-sm hover:text-orange-500 transition">
                   ¿Olvidaste tu contraseña?
                 </button>
               </div>
 
-              {/* Login Button */}
+
               <button
                 type="submit"
                 disabled={cargando}
@@ -143,7 +139,7 @@ export default function LoginPage() {
                 {cargando ? 'Iniciando sesión...' : 'Iniciar sesión'}
               </button>
 
-              {/* Mensaje */}
+
               {mensaje && (
                 <p className={`mt-4 text-center ${mensaje.includes('exitoso') ? 'text-green-400' : 'text-red-400'}`}>
                   {mensaje}
@@ -151,7 +147,7 @@ export default function LoginPage() {
               )}
             </form>
 
-            {/* Sign Up Link */}
+
             <div className="mt-8 text-center">
               <p className="text-gray-300">
                 ¿No tiene cuenta?{' '}

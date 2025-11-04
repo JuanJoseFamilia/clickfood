@@ -1,6 +1,5 @@
-// src/controllers/usuariosController.js
 import bcrypt from "bcrypt";
-import { supabase } from "../config/supabaseClient.js";
+import { supabase } from "../config/supabase.js";
 
 //REGISTRO
 export const registrarUsuario = async (req, res) => {
@@ -37,7 +36,7 @@ export const registrarUsuario = async (req, res) => {
           rol,
         },
       ])
-      .select();
+      .select("id_usuario, nombre, email, rol"); // Devuelve el usuario sin la contraseña
 
     if (error) throw error;
 
@@ -68,6 +67,10 @@ export const loginUsuario = async (req, res) => {
       .single();
 
     if (usuarioError || !usuario) {
+      // Manejar error de "no encontrado" de .single()
+      if (usuarioError && usuarioError.code === 'PGRST116') {
+        return res.status(401).json({ error: "Credenciales incorrectas." });
+      }
       return res.status(401).json({ error: "Credenciales incorrectas." });
     }
 
@@ -92,5 +95,117 @@ export const loginUsuario = async (req, res) => {
   } catch (err) {
     console.error("Error al iniciar sesión:", err.message);
     res.status(500).json({ error: "Error al iniciar sesión." });
+  }
+};
+
+
+export const getAllUsuarios = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("id_usuario, nombre, email, rol"); 
+
+    if (error) throw error;
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("Error al obtener usuarios:", err.message);
+    res.status(500).json({ error: "Error al obtener usuarios." });
+  }
+};
+
+
+export const getUsuarioById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("id_usuario, nombre, email, rol") 
+      .eq("id_usuario", id)
+      .single();
+
+    if (error) {
+      // Manejar error de "no encontrado" de .single()
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: "Usuario no encontrado." });
+      }
+      throw error;
+    }
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("Error al obtener usuario:", err.message);
+    res.status(500).json({ error: "Error al obtener usuario." });
+  }
+};
+
+
+export const updateUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, email, rol, contraseña } = req.body;
+
+    const updates = {}; 
+
+    if (nombre) updates.nombre = nombre;
+    if (email) updates.email = email;
+    if (rol) updates.rol = rol;
+
+    if (contraseña) {
+      updates.contraseña = await bcrypt.hash(contraseña, 10);
+    }
+
+    if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: "No se proporcionaron datos para actualizar." });
+    }
+
+    const { data, error } = await supabase
+      .from("usuarios")
+      .update(updates)
+      .eq("id_usuario", id)
+      .select("id_usuario, nombre, email, rol"); 
+
+    if (error) throw error;
+    
+    if (!data || data.length === 0) {
+        return res.status(404).json({ error: "Usuario no encontrado." });
+    }
+
+    res.status(200).json({
+      mensaje: "Usuario actualizado correctamente",
+      usuario: data[0],
+    });
+
+  } catch (err) {
+    console.error("Error al actualizar usuario:", err.message);
+    res.status(500).json({ error: "Error al actualizar usuario." });
+  }
+};
+
+
+export const deleteUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from("usuarios")
+      .delete()
+      .eq("id_usuario", id)
+      .select("id_usuario, nombre"); // Devuelve los datos del usuario eliminado para confirmación
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+        return res.status(404).json({ error: "Usuario no encontrado." });
+    }
+
+    res.status(200).json({
+      mensaje: "Usuario eliminado correctamente",
+      usuario_eliminado: data[0]
+    });
+  } catch (err) {
+    console.error("Error al eliminar usuario:", err.message);
+    res.status(500).json({ error: "Error al eliminar usuario." });
   }
 };

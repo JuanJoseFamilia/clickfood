@@ -1,5 +1,5 @@
 // backend/testSupabase.js
-import { supabase } from '../config/supabaseClient.js'
+import { supabase } from '../config/supabase.js'
 
 
 async function testConnection() {
