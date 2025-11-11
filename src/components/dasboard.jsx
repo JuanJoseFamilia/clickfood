@@ -2,9 +2,6 @@ import { BarChart, Bar, XAxis, ResponsiveContainer, PieChart, Pie, Cell, AreaCha
 import { FileText, DollarSign, Users, CreditCard, Plus, AlertTriangle, ChevronRight, LogOut, Search, Edit2, Trash2, X, Save, Package, Bookmark } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-const categorias = ['Hamburguesas', 'Pizzas', 'Ensaladas', 'Pastas', 'Bebidas', 'Postres', 'Entradas'];
-const tiposDeReporte = ['Ventas', 'Inventario', 'Clientes', 'Reservas', 'Pedidos', 'General'];
-
 
 function formatDateTimeLocal(timestamp) {
   if (!timestamp) return '';
@@ -13,11 +10,11 @@ function formatDateTimeLocal(timestamp) {
   if (isNaN(date.getTime())) return '';
 
   const pad = (num) => String(num).padStart(2, '0');
-  
+
   const year = date.getFullYear();
   const month = pad(date.getMonth() + 1);
   const day = pad(date.getDate());
-  
+
   const hours = pad(date.getHours());
   const minutes = pad(date.getMinutes());
 
@@ -343,7 +340,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
 
 
   const rolesPermitidos = ['cliente', 'empleado', 'administrador'];
-  const estadosMesa = ['Disponible', 'Reservada'];
+  const estadosMesa = ['Disponible', 'Reservada', 'Limpieza pendiente'];
   const estadosPedido = ['Pendiente', 'En preparación', 'Listo para entrega', 'Completado', 'Cancelado'];
 
   const fetchItems = async () => {
@@ -361,7 +358,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
     }
   };
 
-  useEffect(() => { fetchItems(); }, [endpoint]); 
+  useEffect(() => { fetchItems(); }, [endpoint]);
 
 
   const getIdKey = () => {
@@ -375,7 +372,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
   };
 
   const filteredItems = items.filter(item =>
-    Object.values(item).some(val => 
+    Object.values(item).some(val =>
       String(val).toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
@@ -386,7 +383,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
     fields.forEach(field => initialData[field] = '');
 
     if (endpoint === 'usuarios') {
-        initialData['contraseña'] = '';
+      initialData['contraseña'] = '';
     }
     setFormData(initialData);
     setShowModal(true);
@@ -406,7 +403,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
 
 
     if (endpoint === 'usuarios') {
-        editData['contraseña'] = ''; 
+      editData['contraseña'] = '';
     }
     setFormData(editData);
     setShowModal(true);
@@ -414,39 +411,39 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
 
   const handleSave = async () => {
     const isUpdating = !!currentItem;
-    
+
     const idKey = getIdKey();
-    const idValue = currentItem ? currentItem[idKey] : null; 
-    
+    const idValue = currentItem ? currentItem[idKey] : null;
+
 
     if (isUpdating && !idValue) {
 
-        alert("Error de aplicación: No se pudo determinar el ID para actualizar.");
-        return;
+      alert("Error de aplicación: No se pudo determinar el ID para actualizar.");
+      return;
     }
 
 
     const url = isUpdating ? `http://localhost:5000/${endpoint}/${idValue}` : `http://localhost:5000/${endpoint}`;
-    
-    const method = isUpdating ? 'PATCH' : 'POST'; 
+
+    const method = isUpdating ? 'PUT' : 'POST';
 
     let dataToSend = { ...formData };
-    
+
 
     if (!isUpdating) {
 
-      delete dataToSend[idKey]; 
+      delete dataToSend[idKey];
     }
     if (isUpdating && endpoint === 'usuarios' && dataToSend.contraseña === '') {
 
-        delete dataToSend.contraseña;
+      delete dataToSend.contraseña;
     }
 
     try {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSend), 
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
@@ -457,9 +454,9 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
       fetchItems();
     } catch (error) {
       console.error(error);
-
       alert(`Error: No se pudo ${isUpdating ? 'actualizar' : 'crear'} el elemento. Detalle: ${error.message}`);
     }
+
   };
 
   const handleDelete = (item) => {
@@ -469,15 +466,15 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
 
   const confirmDelete = async () => {
     if (!currentItem) return;
-    
-    const idKey = getIdKey(); 
+
+    const idKey = getIdKey();
     const idValue = currentItem[idKey];
     try {
       const response = await fetch(`http://localhost:5000/${endpoint}/${idValue}`, { method: 'DELETE' });
-      
+
       if (!response.ok && response.status !== 204) {
-         const errData = await response.json(); 
-         throw new Error(errData.detalle || errData.message || 'Error al eliminar');
+        const errData = await response.json();
+        throw new Error(errData.detalle || errData.message || 'Error al eliminar');
       }
       setShowDeleteModal(false);
       fetchItems();
@@ -647,14 +644,14 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields }) {
                     Contraseña {currentItem ? '(Opcional: Dejar vacío para no cambiar)' : '*'}
                   </label>
                   <input
-                      type='password'
-                      name='contraseña'
-                      value={formData['contraseña'] || ''}
-                      onChange={(e) => setFormData({ ...formData, ['contraseña']: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder={currentItem ? 'Nueva contraseña' : 'Ingrese contraseña'}
-                      required={!currentItem} 
-                    />
+                    type='password'
+                    name='contraseña'
+                    value={formData['contraseña'] || ''}
+                    onChange={(e) => setFormData({ ...formData, ['contraseña']: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder={currentItem ? 'Nueva contraseña' : 'Ingrese contraseña'}
+                    required={!currentItem}
+                  />
                 </div>
               )}
 
