@@ -1,3 +1,4 @@
+// backend/src/models/cliente.js
 const { supabase } = require('../config/supabase.js');
 
 class Cliente {
@@ -15,7 +16,7 @@ class Cliente {
         )
       `)
       .order('id_cliente', { ascending: false });
-    
+
     if (error) throw error;
     return data;
   }
@@ -35,7 +36,7 @@ class Cliente {
       `)
       .eq('id_cliente', id)
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -47,7 +48,7 @@ class Cliente {
       .insert([cliente])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -60,7 +61,7 @@ class Cliente {
       .eq('id_cliente', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -72,7 +73,7 @@ class Cliente {
       .delete()
       .eq('id_cliente', id)
       .select();
-    
+
     if (error) throw error;
     return data;
   }
@@ -84,7 +85,7 @@ class Cliente {
       .select('id_cliente')
       .eq('id_usuario', id_usuario)
       .single();
-    
+
     if (error && error.code !== 'PGRST116') throw error;
     return data !== null;
   }
@@ -103,7 +104,7 @@ class Cliente {
       `)
       .eq('id_usuario', id_usuario)
       .single();
-    
+
     if (error) throw error;
     return data;
   }

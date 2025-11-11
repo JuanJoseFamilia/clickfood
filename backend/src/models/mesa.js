@@ -1,53 +1,54 @@
+// backend/src/models/mesa.js
 const { supabase } = require('../config/supabase.js');
 
 class Mesa {
-  // Obtener todas las mesas
-  static async obtenerTodas() {
-    const { data, error } = await supabase
-      .from('mesas')
-      .select('*')
-      .order('numero', { ascending: true });
-    
-    if (error) throw error;
-    return data;
-  }
+  // Obtener todas las mesas
+  static async obtenerTodas() {
+    const { data, error } = await supabase
+      .from('mesas')
+      .select('*')
+      .order('numero', { ascending: true });
 
-  // Obtener mesa por ID
-  static async obtenerPorId(id) {
-    const { data, error } = await supabase
-      .from('mesas')
-      .select('*')
-      .eq('id_mesa', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
+    if (error) throw error;
+    return data;
+  }
 
-  // Obtener mesas disponibles
-  static async obtenerDisponibles() {
-    const { data, error } = await supabase
-      .from('mesas')
-      .select('*')
-      .eq('estado', 'Disponible')
-      .order('numero', { ascending: true });
-    
-    if (error) throw error;
-    return data;
-  }
+  // Obtener mesa por ID
+  static async obtenerPorId(id) {
+    const { data, error } = await supabase
+      .from('mesas')
+      .select('*')
+      .eq('id_mesa', id)
+      .single();
 
-  // Actualizar estado de mesa
-  static async actualizarEstado(id, estado) {
-    const { data, error } = await supabase
-      .from('mesas')
-      .update({ estado })
-      .eq('id_mesa', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
+    if (error) throw error;
+    return data;
+  }
+
+  // Obtener mesas disponibles
+  static async obtenerDisponibles() {
+    const { data, error } = await supabase
+      .from('mesas')
+      .select('*')
+      .eq('estado', 'Disponible')
+      .order('numero', { ascending: true });
+
+    if (error) throw error;
+    return data;
+  }
+
+  // Actualizar estado de mesa
+  static async actualizarEstado(id, estado) {
+    const { data, error } = await supabase
+      .from('mesas')
+      .update({ estado })
+      .eq('id_mesa', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
 
 
 
@@ -55,10 +56,10 @@ class Mesa {
   static async crear(datosMesa) {
     const { data, error } = await supabase
       .from('mesas')
-      .insert([datosMesa]) 
+      .insert([datosMesa])
       .select()
-      .single(); 
-    
+      .single();
+
     if (error) throw error;
     return data;
   }
@@ -67,11 +68,11 @@ class Mesa {
   static async actualizar(id, datosMesa) {
     const { data, error } = await supabase
       .from('mesas')
-      .update(datosMesa) 
+      .update(datosMesa)
       .eq('id_mesa', id)
       .select()
-      .single(); 
-    
+      .single();
+
     if (error) throw error;
     return data;
   }
@@ -82,8 +83,8 @@ class Mesa {
       .from('mesas')
       .delete()
       .eq('id_mesa', id)
-      .select(); 
-    
+      .select();
+
     if (error) throw error;
     return data;
   }

@@ -1,3 +1,4 @@
+// backend/src/models/producto.js
 const { supabase } = require('../config/supabase.js');
 
 class Producto {
@@ -7,7 +8,7 @@ class Producto {
       .from('productos')
       .select('*')
       .order('id_producto', { ascending: false });
-    
+
     if (error) throw error;
     return data;
   }
@@ -19,7 +20,7 @@ class Producto {
       .select('*')
       .eq('id_producto', id)
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -31,7 +32,7 @@ class Producto {
       .insert([producto])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -44,7 +45,7 @@ class Producto {
       .eq('id_producto', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -56,7 +57,7 @@ class Producto {
       .delete()
       .eq('id_producto', id)
       .select();
-    
+
     if (error) throw error;
     return data;
   }
@@ -67,7 +68,7 @@ class Producto {
       .from('productos')
       .select('*')
       .eq('categoria', categoria);
-    
+
     if (error) throw error;
     return data;
   }
@@ -79,7 +80,7 @@ class Producto {
       .select('*')
       .lt('stock', limite)
       .order('stock', { ascending: true });
-    
+
     if (error) throw error;
     return data;
   }

@@ -1,4 +1,5 @@
-import { supabase } from '../config/supabase.js'; 
+// backend/src/models/empleado.js
+import { supabase } from '../config/supabase.js';
 
 class Empleado {
     static async obtenerTodos() {
@@ -33,7 +34,7 @@ class Empleado {
                 usuarios (nombre, email) 
             `)
             .eq('id_empleado', id)
-            .single(); 
+            .single();
 
         if (error) {
 
@@ -93,9 +94,9 @@ class Empleado {
             .from('empleados')
             .delete()
             .eq('id_empleado', id)
-            .select() 
-            .single(); 
-            
+            .select()
+            .single();
+
         if (error) {
             console.error(`Error al eliminar empleado por ID ${id}:`, error);
             throw error;
