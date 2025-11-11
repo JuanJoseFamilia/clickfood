@@ -1,3 +1,4 @@
+// backend/src/models/usuario.js
 const { supabase } = require('../config/supabase.js');
 const bcrypt = require('bcryptjs');
 
@@ -8,7 +9,7 @@ class Usuario {
       .from('usuarios')
       .select('id_usuario, nombre, email, rol, activo, fecha_creacion')
       .order('id_usuario', { ascending: false });
-    
+
     if (error) throw error;
     return data;
   }
@@ -20,7 +21,7 @@ class Usuario {
       .select('id_usuario, nombre, email, rol, activo, fecha_creacion')
       .eq('id_usuario', id)
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -39,7 +40,7 @@ class Usuario {
       }])
       .select('id_usuario, nombre, email, rol, activo, fecha_creacion')
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -51,7 +52,7 @@ class Usuario {
       .select('*')
       .eq('email', email)
       .single();
-    
+
     if (error && error.code !== 'PGRST116') throw error;
     return data;
   }
