@@ -1,34 +1,21 @@
+// backend/src/routes/productoRoutes.js
 import { Router } from 'express';
 
-import { 
-    obtenerProductos, 
-    crearProducto, 
-    actualizarProducto, 
+import {
+    obtenerProductos,
+    crearProducto,
+    actualizarProducto,
     eliminarProducto,
-    obtenerProductoPorId 
-} from '../controllers/productoController.js'; 
-
+    obtenerProductoPorId
+} from '../controllers/productoController.js';
 
 const router = Router();
 
-
-// Corresponde a: GET /api/productos
-router.get('/productos', obtenerProductos);
-
-
-// Corresponde a: POST /api/productos
-router.post('/productos', crearProducto);
-
-
-// Corresponde a: PUT /api/productos/:id
-router.put('/productos/:id', actualizarProducto);
-
-
-// Corresponde a: DELETE /api/productos/:id
-router.delete('/productos/:id', eliminarProducto);
-
-
-// Corresponde a: GET /api/productos/:id
-router.get('/productos/:id', obtenerProductoPorId);
+// fix - Sin /productos (el prefijo ya está en index.js)
+router.get('/', obtenerProductos);  // GET /productos     
+router.post('/', crearProducto);        // POST /productos    
+router.get('/:id', obtenerProductoPorId);    // GET /productos/:id
+router.put('/:id', actualizarProducto);    // PUT /productos/:id
+router.delete('/:id', eliminarProducto);     // DELETE /productos/:id
 
 export default router;

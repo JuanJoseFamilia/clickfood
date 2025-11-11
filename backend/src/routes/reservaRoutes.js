@@ -1,23 +1,22 @@
+// backend/src/routes/reservaRoutes.js
 import { Router } from 'express';
-// Importamos el controlador de reservas
+
 import {
-    obtenerReservas,
-    crearReserva,
-    actualizarReserva, // <- Esta función se llama con PATCH
-    eliminarReserva,
-    obtenerReservaPorId
+    obtenerReservas,
+    crearReserva,
+    actualizarReserva,
+    eliminarReserva,
+    obtenerReservaPorId
 } from '../controllers/reservaController.js';
 
 const router = Router();
 
 // Rutas a la raíz /reservas
-router.get('/', obtenerReservas);
-router.post('/', crearReserva);
-
-// CORRECCIÓN: Cambiamos PUT a PATCH
-router.patch('/:id', actualizarReserva); // PATCH /reservas/:id 
-
-router.delete('/:id', eliminarReserva);
-router.get('/:id', obtenerReservaPorId);
+router.get('/', obtenerReservas);  // GET /reservas
+router.post('/', crearReserva);  // POST /reservas
+// fix: Cambiamos PATCH a  PUT
+router.put('/:id', actualizarReserva);// PUT /reservas/:id
+router.delete('/:id', eliminarReserva);// DELETE /reservas/:id
+router.get('/:id', obtenerReservaPorId);// GET /reservas/:id
 
 export default router;

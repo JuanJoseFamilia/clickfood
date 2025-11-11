@@ -1,3 +1,4 @@
+// backend/src/routes/mesaRoutes.js
 import express from 'express';
 const router = express.Router();
 
@@ -9,7 +10,7 @@ router.route('/')
 
 router.route('/:id')
   .get(mesaController.obtenerMesaPorId)
-  .put(mesaController.actualizarMesa) 
+  .put(mesaController.actualizarMesa)
   .delete(mesaController.eliminarMesa);
 
 export default router;
