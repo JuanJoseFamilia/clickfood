@@ -1,4 +1,5 @@
-import Empleado from '../models/empleado.js'; 
+// backend/src/controllers/empleadoController.js
+import Empleado from '../models/empleado.js';
 
 // Obtener todos los empleados
 export const obtenerEmpleados = async (req, res) => {
@@ -32,7 +33,7 @@ export const crearEmpleado = async (req, res) => {
   console.log("Intento de CREAR EMPLEADO. Body:", req.body);
   try {
 
-    const { id_usuario, puesto, salario } = req.body; 
+    const { id_usuario, puesto, salario } = req.body;
 
     if (!id_usuario || !puesto || !salario) {
       return res.status(400).json({

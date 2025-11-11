@@ -1,3 +1,4 @@
+// backend/src/controllers/mesaController.js
 import Mesa from '../models/mesa.js';
 
 // Obtener todas las mesas
@@ -31,16 +32,16 @@ export const obtenerMesaPorId = async (req, res) => {
 export const crearMesa = async (req, res) => {
   console.log("Intento de CREAR MESA. Body:", req.body);
   try {
-    const { numero, capacidad, estado } = req.body; 
+    const { numero, capacidad, estado } = req.body;
 
-    if (numero === undefined || capacidad === undefined || !estado) { 
+    if (numero === undefined || capacidad === undefined || !estado) {
       return res.status(400).json({
-        message: 'Campos requeridos: numero, capacidad, estado' 
+        message: 'Campos requeridos: numero, capacidad, estado'
       });
     }
 
     const nuevaMesa = await Mesa.crear({
-      numero: parseInt(numero), 
+      numero: parseInt(numero),
       capacidad: parseInt(capacidad),
       estado
     });
@@ -59,9 +60,9 @@ export const crearMesa = async (req, res) => {
 export const actualizarMesa = async (req, res) => {
   console.log(`Intento de ACTUALIZAR MESA ID (${req.params.id}). Body:`, req.body);
   try {
-    const { numero, capacidad, estado } = req.body; 
+    const { numero, capacidad, estado } = req.body;
     const mesaActualizada = await Mesa.actualizar(req.params.id, {
-      numero: numero ? parseInt(numero) : undefined, 
+      numero: numero ? parseInt(numero) : undefined,
       capacidad: capacidad ? parseInt(capacidad) : undefined,
       estado
     });

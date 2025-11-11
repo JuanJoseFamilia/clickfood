@@ -1,3 +1,4 @@
+// backend/src/controllers/usuarioController.js
 import bcrypt from "bcrypt";
 import { supabase } from "../config/supabase.js";
 
@@ -103,7 +104,7 @@ export const getAllUsuarios = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("usuarios")
-      .select("id_usuario, nombre, email, rol"); 
+      .select("id_usuario, nombre, email, rol");
 
     if (error) throw error;
 
@@ -121,7 +122,7 @@ export const getUsuarioById = async (req, res) => {
 
     const { data, error } = await supabase
       .from("usuarios")
-      .select("id_usuario, nombre, email, rol") 
+      .select("id_usuario, nombre, email, rol")
       .eq("id_usuario", id)
       .single();
 
@@ -146,7 +147,7 @@ export const updateUsuario = async (req, res) => {
     const { id } = req.params;
     const { nombre, email, rol, contraseña } = req.body;
 
-    const updates = {}; 
+    const updates = {};
 
     if (nombre) updates.nombre = nombre;
     if (email) updates.email = email;
@@ -157,19 +158,19 @@ export const updateUsuario = async (req, res) => {
     }
 
     if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ error: "No se proporcionaron datos para actualizar." });
+      return res.status(400).json({ error: "No se proporcionaron datos para actualizar." });
     }
 
     const { data, error } = await supabase
       .from("usuarios")
       .update(updates)
       .eq("id_usuario", id)
-      .select("id_usuario, nombre, email, rol"); 
+      .select("id_usuario, nombre, email, rol");
 
     if (error) throw error;
-    
+
     if (!data || data.length === 0) {
-        return res.status(404).json({ error: "Usuario no encontrado." });
+      return res.status(404).json({ error: "Usuario no encontrado." });
     }
 
     res.status(200).json({
@@ -197,7 +198,7 @@ export const deleteUsuario = async (req, res) => {
     if (error) throw error;
 
     if (!data || data.length === 0) {
-        return res.status(404).json({ error: "Usuario no encontrado." });
+      return res.status(404).json({ error: "Usuario no encontrado." });
     }
 
     res.status(200).json({
