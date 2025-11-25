@@ -1,0 +1,52 @@
+# docker-compose.yml
+# Configuración para levantar el servicio de IA junto con tu backend
+
+version: '3.8'
+
+services:
+  # Servicio de IA (Python/FastAPI)
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: clickfood-ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./ai-service/models:/app/models
+      - ./ai-service/src:/app/src
+    restart: unless-stopped
+    networks:
+      - clickfood-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Tu backend Node.js existente
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: clickfood-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - AI_SERVICE_URL=http://ai-service:8000
+      - MONGODB_URI=${MONGODB_URI}
+    depends_on:
+      - ai-service
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - clickfood-network
+
+networks:
+  clickfood-network:
+    driver: bridge

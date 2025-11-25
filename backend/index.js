@@ -11,6 +11,7 @@ import reservaRoutes from './src/routes/reservaRoutes.js';
 import clienteRoutes from './src/routes/clienteRoutes.js';
 import mesaRoutes from './src/routes/mesaRoutes.js';
 import empleadoRoutes from './src/routes/empleadoRoutes.js';
+import predictionRoutes from './src/routes/predictionRoutes.js';
 
 dotenv.config({ path: "./.env" });
 
@@ -22,7 +23,6 @@ app.get("/", (req, res) => {
     res.json({ mensaje: "API ClickFood funcionando" });
 });
 
-
 app.use("/usuarios", usuariosRouter);
 app.use("/productos", productoRoutes);
 app.use("/pedidos", orderRoutes);
@@ -30,6 +30,7 @@ app.use("/reservas", reservaRoutes);
 app.use("/clientes", clienteRoutes);
 app.use("/mesas", mesaRoutes);
 app.use("/empleados", empleadoRoutes);
+app.use('/api/predictions', predictionRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
@@ -42,6 +43,8 @@ app.listen(PORT, () => {
     console.log(`[CLI]   GET  http://localhost:${PORT}/clientes`);
     console.log(`[MESA]  GET  http://localhost:${PORT}/mesas`);
     console.log(`[EMP]   GET  http://localhost:${PORT}/empleados`);
+    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/health`);     // ← NUEVO
+    console.log(`[AI]    POST http://localhost:${PORT}/api/predictions/train/:id`);  // ← NUEVO
+    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/:id/week`);   // ← NUEVO
     console.log("-----------------------------------------");
 });
-

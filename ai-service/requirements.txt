@@ -1,0 +1,25 @@
+# ai-service/requirements.txt
+# Dependencias para el servicio de predicción de demanda
+
+# Framework web
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Machine Learning y Data Science
+pandas==2.1.3
+numpy==1.26.2
+scikit-learn==1.3.2
+prophet==1.1.5
+joblib==1.3.2
+
+# Validación de datos
+pydantic==2.5.0
+
+# Variables de entorno
+python-dotenv==1.0.0
+
+# HTTP requests (para pruebas)
+requests==2.31.0
+
+# Utilidades
+python-multipart==0.0.6
