@@ -7,7 +7,7 @@ const { Pool } = pg;
 
 // Verifica que la URL esté definida
 if (!process.env.DATABASE_URL) {
-  console.error("❌ ERROR: Falta DATABASE_URL en el archivo .env");
+  console.error("ERROR: Falta DATABASE_URL en el archivo .env");
   process.exit(1);
 }
 

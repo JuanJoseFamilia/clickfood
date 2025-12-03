@@ -1,21 +1,20 @@
-// backend/src/routes/pedidoRoutes.js
 import { Router } from 'express';
-
 import {
     obtenerPedidos,
     crearPedido,
     actualizarPedido,
     eliminarPedido,
-    obtenerPedidoPorId
+    obtenerPedidoPorId,
+    obtenerDetallesPedido 
 } from '../controllers/pedidoController.js';
 
 const router = Router();
 
-
-router.get('/', obtenerPedidos);// GET /pedidos
-router.post('/', crearPedido);// POST /pedidos
-router.get('/:id', obtenerPedidoPorId);// GET /pedidos/:id
-router.put('/:id', actualizarPedido);// PUT /pedidos/:id
-router.delete('/:id', eliminarPedido);// DELETE /pedidos/:id
+router.get('/', obtenerPedidos);
+router.post('/', crearPedido);
+router.get('/:id/detalle', obtenerDetallesPedido); 
+router.get('/:id', obtenerPedidoPorId);
+router.put('/:id', actualizarPedido);
+router.delete('/:id', eliminarPedido);
 
 export default router;

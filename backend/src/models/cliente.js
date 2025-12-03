@@ -1,113 +1,77 @@
-// backend/src/models/cliente.js
-const { supabase } = require('../config/supabase.js');
+import { supabase } from '../config/supabase.js';
 
 class Cliente {
-  // Obtener todos los clientes
   static async obtenerTodos() {
     const { data, error } = await supabase
       .from('clientes')
       .select(`
-        *,
-        usuarios (
-          id_usuario,
-          nombre,
-          email,
-          rol
-        )
+        id_cliente, id_usuario, telefono, direccion,
+        usuarios ( nombre, email, rol )
       `)
       .order('id_cliente', { ascending: false });
 
     if (error) throw error;
-    return data;
+
+    return data.map(c => ({
+        ...c,
+        nombre_usuario: c.usuarios?.nombre || 'Desconocido',
+        email_usuario: c.usuarios?.email || 'Sin email'
+    }));
   }
 
-  // Obtener cliente por ID
   static async obtenerPorId(id) {
     const { data, error } = await supabase
       .from('clientes')
-      .select(`
-        *,
-        usuarios (
-          id_usuario,
-          nombre,
-          email,
-          rol
-        )
-      `)
+      .select(`*, usuarios (id_usuario, nombre, email)`)
       .eq('id_cliente', id)
       .single();
-
     if (error) throw error;
     return data;
   }
 
-  // Crear nuevo cliente
-  static async crear(cliente) {
-    const { data, error } = await supabase
-      .from('clientes')
-      .insert([cliente])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  // Actualizar cliente
-  static async actualizar(id, cliente) {
-    const { data, error } = await supabase
-      .from('clientes')
-      .update(cliente)
-      .eq('id_cliente', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  // Eliminar cliente
-  static async eliminar(id) {
-    const { data, error } = await supabase
-      .from('clientes')
-      .delete()
-      .eq('id_cliente', id)
-      .select();
-
-    if (error) throw error;
-    return data;
-  }
-
-  // Verificar si el usuario ya tiene un perfil de cliente
   static async verificarExistencia(id_usuario) {
     const { data, error } = await supabase
       .from('clientes')
       .select('id_cliente')
       .eq('id_usuario', id_usuario)
-      .single();
-
-    if (error && error.code !== 'PGRST116') throw error;
+      .maybeSingle(); 
+    
+    if (error) throw error;
     return data !== null;
   }
 
-  // Obtener cliente por ID de usuario
-  static async obtenerPorUsuario(id_usuario) {
+  static async crear(cliente) {
     const { data, error } = await supabase
       .from('clientes')
-      .select(`
-        *,
-        usuarios (
-          id_usuario,
-          nombre,
-          email
-        )
-      `)
-      .eq('id_usuario', id_usuario)
-      .single();
-
+      .insert([{
+          id_usuario: parseInt(cliente.id_usuario),
+          telefono: cliente.telefono,
+          direccion: cliente.direccion
+      }])
+      .select().single();
     if (error) throw error;
     return data;
   }
+
+  static async actualizar(id, cliente) {
+    const updates = {};
+    if (cliente.telefono) updates.telefono = cliente.telefono;
+    if (cliente.direccion) updates.direccion = cliente.direccion;
+
+    const { data, error } = await supabase
+      .from('clientes')
+      .update(updates)
+      .eq('id_cliente', id)
+      .select().single();
+    if (error) throw error;
+    return data;
+  }
+
+  static async eliminar(id) {
+    const { error, count } = await supabase.from('clientes').delete().eq('id_cliente', id);
+    if (error) throw error;
+    return count > 0;
+  }
 }
 
-module.exports = Cliente;
+export default Cliente;

@@ -11,7 +11,6 @@ export const registrarUsuario = async (req, res) => {
       return res.status(400).json({ error: "Todos los campos son obligatorios." });
     }
 
-    // Verificar si el usuario ya existe
     const { data: existente, error: existeError } = await supabase
       .from("usuarios")
       .select("email")
@@ -23,7 +22,6 @@ export const registrarUsuario = async (req, res) => {
       return res.status(400).json({ error: "El correo ya esta registrado." });
     }
 
-    // Encriptar contraseña
     const hashedPassword = await bcrypt.hash(contraseña, 10);
 
     // Insertar usuario
@@ -37,7 +35,7 @@ export const registrarUsuario = async (req, res) => {
           rol,
         },
       ])
-      .select("id_usuario, nombre, email, rol"); // Devuelve el usuario sin la contraseña
+      .select("id_usuario, nombre, email, rol"); 
 
     if (error) throw error;
 
@@ -68,7 +66,6 @@ export const loginUsuario = async (req, res) => {
       .single();
 
     if (usuarioError || !usuario) {
-      // Manejar error de "no encontrado" de .single()
       if (usuarioError && usuarioError.code === 'PGRST116') {
         return res.status(401).json({ error: "Credenciales incorrectas." });
       }
@@ -127,7 +124,6 @@ export const getUsuarioById = async (req, res) => {
       .single();
 
     if (error) {
-      // Manejar error de "no encontrado" de .single()
       if (error.code === 'PGRST116') {
         return res.status(404).json({ error: "Usuario no encontrado." });
       }
@@ -193,8 +189,7 @@ export const deleteUsuario = async (req, res) => {
       .from("usuarios")
       .delete()
       .eq("id_usuario", id)
-      .select("id_usuario, nombre"); // Devuelve los datos del usuario eliminado para confirmación
-
+      .select("id_usuario, nombre"); 
     if (error) throw error;
 
     if (!data || data.length === 0) {

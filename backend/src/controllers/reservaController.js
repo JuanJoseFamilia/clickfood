@@ -5,10 +5,9 @@ import Reserva from '../models/reserva.js'; // CAMBIO: Módulos ES
 export const obtenerReservas = async (req, res) => {
     try {
         const reservas = await Reserva.obtenerTodas();
-        // NOTA: Si esta función falla, el error va al catch, no devuelve HTML.
         res.status(200).json(reservas);
     } catch (error) {
-        console.error('ERROR AL OBTENER RESERVAS:', error); // Log del error real
+        console.error('ERROR AL OBTENER RESERVAS:', error); 
         res.status(500).json({
             message: 'Error al obtener las reservas',
             error: error.message
@@ -48,7 +47,6 @@ export const crearReserva = async (req, res) => {
             });
         }
 
-        // NOTA: Aquí deberías convertir id_cliente e id_mesa a INT antes de verificar
         const disponible = await Reserva.verificarDisponibilidad(id_mesa, fecha_hora);
         if (!disponible) {
             return res.status(400).json({
@@ -78,7 +76,6 @@ export const actualizarReserva = async (req, res) => {
     try {
         const { id_cliente, id_mesa, fecha_hora, estado } = req.body;
 
-        // El modelo se encarga de convertir a INT si el valor existe
         const reservaActualizada = await Reserva.actualizar(req.params.id, {
             id_cliente,
             id_mesa,

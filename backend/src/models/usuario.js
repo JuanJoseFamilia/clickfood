@@ -1,6 +1,12 @@
-// backend/src/models/usuario.js
-const { supabase } = require('../config/supabase.js');
-const bcrypt = require('bcryptjs');
+import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const supabaseUrl = process.env.supabaseUrl;
+const supabaseKey = process.env.supabaseKey;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 class Usuario {
   // Obtener todos los usuarios
@@ -26,9 +32,8 @@ class Usuario {
     return data;
   }
 
-  // Crear nuevo usuario
+  // Crear nuevo usuario (Registro)
   static async crear(usuario) {
-    // Encriptar contraseña
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(usuario.password, salt);
 
@@ -45,22 +50,41 @@ class Usuario {
     return data;
   }
 
-  // Buscar usuario por email (para login)
+
   static async buscarPorEmail(email) {
-    const { data, error } = await supabase
+    console.log("--- DEBUG: Buscando usuario por email:", email);
+
+    const { data: usuario, error } = await supabase
       .from('usuarios')
       .select('*')
       .eq('email', email)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
-    return data;
+
+    if (usuario) {
+
+        const { data: cliente } = await supabase
+            .from('clientes')
+            .select('telefono, id_cliente')
+            .eq('id_usuario', usuario.id_usuario)
+            .maybeSingle(); 
+        
+        if (cliente) {
+            console.log("--- DEBUG: Cliente encontrado. Agregando teléfono:", cliente.telefono);
+            usuario.telefono = cliente.telefono;
+            usuario.id_cliente_real = cliente.id_cliente; 
+        } else {
+            console.log("--- DEBUG: Usuario encontrado, pero NO tiene registro en tabla 'clientes'.");
+        }
+    }
+
+    return usuario;
   }
 
-  // Verificar contraseña
   static async verificarPassword(passwordIngresado, passwordHash) {
     return await bcrypt.compare(passwordIngresado, passwordHash);
   }
 }
 
-module.exports = Usuario;
+export default Usuario;

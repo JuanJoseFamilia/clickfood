@@ -1,106 +1,101 @@
-// backend/src/models/empleado.js
 import { supabase } from '../config/supabase.js';
 
 class Empleado {
     static async obtenerTodos() {
-        // Obtenemos todos los empleados
         const { data, error } = await supabase
             .from('empleados')
-
             .select(`
                 id_empleado,
                 id_usuario,
                 puesto,
                 salario,
-                usuarios (nombre, email) 
+                usuarios (nombre, email, rol)
             `);
 
         if (error) {
             console.error('Error al obtener todos los empleados:', error);
             throw error;
         }
-        return data;
+        
+        return data.map(e => ({
+            ...e,
+            nombre_usuario: e.usuarios?.nombre || 'Desconocido',
+            email_usuario: e.usuarios?.email || 'Sin email',
+            rol_usuario: e.usuarios?.rol || 'N/A'
+        }));
     }
 
     static async obtenerPorId(id) {
-        // Obtenemos un empleado por su ID de empleado (id_empleado)
         const { data, error } = await supabase
             .from('empleados')
-            .select(`
-                id_empleado,
-                id_usuario,
-                puesto,
-                salario,
-                usuarios (nombre, email) 
-            `)
+            .select(`*, usuarios (nombre, email)`)
             .eq('id_empleado', id)
             .single();
 
         if (error) {
-
             if (error.code === 'PGRST116') return null;
-            console.error(`Error al obtener empleado por ID ${id}:`, error);
             throw error;
         }
         return data;
     }
 
-    static async crear(datosEmpleado) {
-        // Insertar el nuevo empleado
-        const { data, error } = await supabase
-            .from('empleados')
-            .insert([
-                {
-                    id_usuario: datosEmpleado.id_usuario,
-                    puesto: datosEmpleado.puesto,
-                    salario: datosEmpleado.salario
-                }
-            ])
+    static async crearConUsuario(datos) {
+        const { nombre, email, contraseña, puesto, salario } = datos;
+
+        const { data: usuario, error: errorUsuario } = await supabase
+            .from('usuarios')
+            .insert([{
+                nombre: nombre,
+                email: email,
+                contraseña: contraseña, 
+                rol: 'empleado' 
+            }])
             .select()
             .single();
 
-        if (error) {
-            console.error('Error al crear empleado:', error);
-            throw error;
+        if (errorUsuario) {
+            console.error("Error al crear usuario base para empleado:", errorUsuario);
+            throw new Error("No se pudo registrar el usuario (posiblemente el email ya existe).");
         }
-        return data;
+
+        const { data: empleado, error: errorEmpleado } = await supabase
+            .from('empleados')
+            .insert([{
+                id_usuario: usuario.id_usuario,
+                puesto: puesto,
+                salario: parseFloat(salario)
+            }])
+            .select()
+            .single();
+
+        if (errorEmpleado) {
+            await supabase.from('usuarios').delete().eq('id_usuario', usuario.id_usuario);
+            console.error("Error al crear perfil de empleado:", errorEmpleado);
+            throw errorEmpleado;
+        }
+
+        return { ...empleado, usuario };
     }
 
     static async actualizar(id, datosEmpleado) {
-        // Actualizar un empleado por su ID de empleado
+        const updates = {};
+        if (datosEmpleado.puesto) updates.puesto = datosEmpleado.puesto;
+        if (datosEmpleado.salario) updates.salario = parseFloat(datosEmpleado.salario);
+
         const { data, error } = await supabase
             .from('empleados')
-            .update({
-                id_usuario: datosEmpleado.id_usuario,
-                puesto: datosEmpleado.puesto,
-                salario: datosEmpleado.salario
-            })
+            .update(updates)
             .eq('id_empleado', id)
             .select()
             .single();
 
-        if (error) {
-
-            if (error.code === 'PGRST116') return null;
-            console.error(`Error al actualizar empleado por ID ${id}:`, error);
-            throw error;
-        }
+        if (error) throw error;
         return data;
     }
 
     static async eliminar(id) {
-        // Eliminar un empleado por su ID de empleado
-        const { error, count } = await supabase
-            .from('empleados')
-            .delete()
-            .eq('id_empleado', id)
-            .select()
-            .single();
-
-        if (error) {
-            console.error(`Error al eliminar empleado por ID ${id}:`, error);
-            throw error;
-        }
+        const { error, count } = await supabase.from('empleados').delete().eq('id_empleado', id);
+        if (error) throw error;
         return count > 0;
     }
 }

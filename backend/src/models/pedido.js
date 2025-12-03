@@ -1,4 +1,3 @@
-// backend/src/models/pedido.js
 import { supabase } from '../config/supabase.js';
 
 class Pedido {
@@ -6,110 +5,134 @@ class Pedido {
         const { data, error } = await supabase
             .from('pedidos')
             .select(`
-                id_pedido, 
-                id_cliente, 
-                id_empleado,
-                fecha_hora, 
-                total,
-                estado, 
-                clientes (usuarios(nombre)),
-                empleados (puesto)
-            `);
+                id_pedido, 
+                id_cliente, 
+                id_empleado,
+                fecha_hora, 
+                total,
+                estado, 
+                clientes (
+                    usuarios (nombre)
+                ),
+                empleados (
+                    usuarios (nombre)
+                )
+            `)
+            .order('fecha_hora', { ascending: false });
 
         if (error) {
             console.error('Error al obtener todos los pedidos:', error);
             throw error;
         }
-        return data;
+        
+        return data.map(p => ({
+            ...p,
+            nombre_cliente: p.clientes?.usuarios?.nombre || 'Desconocido',
+            nombre_empleado: p.empleados?.usuarios?.nombre || 'Desconocido'
+        }));
     }
 
     static async obtenerPorId(id) {
         const { data, error } = await supabase
             .from('pedidos')
             .select(`
-                id_pedido, 
-                id_cliente, 
-                id_empleado,
-                fecha_hora,
-                total,
-                estado, 
-                clientes (usuarios(nombre)),
-                empleados (puesto)
-            `)
+                id_pedido, id_cliente, id_empleado, fecha_hora, total, estado, 
+                clientes (usuarios(nombre)),
+                empleados (usuarios(nombre))
+            `)
             .eq('id_pedido', id)
             .single();
+            
+        if (error) throw error;
+        return data;
+    }
+
+    static async obtenerDetalles(idPedido) {
+        const { data, error } = await supabase
+            .from('detalle_pedido')
+            .select(`
+                cantidad,
+                subtotal,
+                productos (
+                    nombre,
+                    precio
+                )
+            `)
+            .eq('id_pedido', idPedido);
 
         if (error) {
-            if (error.code === 'PGRST116') return null;
-            console.error(`Error al obtener pedido por ID ${id}:`, error);
+            console.error(`Error al obtener detalles del pedido ${idPedido}:`, error);
             throw error;
         }
-        return data;
+
+        return data.map(d => ({
+            cantidad: d.cantidad,
+            subtotal: d.subtotal,
+            nombre_producto: d.productos?.nombre || 'Producto eliminado',
+            precio_unitario: d.productos?.precio || 0
+        }));
     }
 
     static async crear(datosPedido) {
         const { id_cliente, id_empleado, total, estado, fecha_hora } = datosPedido;
-
         const { data, error } = await supabase
             .from('pedidos')
-            .insert([
-                {
-                    id_cliente: parseInt(id_cliente),
-                    id_empleado: parseInt(id_empleado),
-                    total: parseFloat(total),
-                    estado: estado,
-                    fecha_hora: fecha_hora
-                }
-            ])
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Error al crear pedido:', error);
-            if (error.code === '23503') {
-                throw new Error("Una llave foránea (cliente o empleado) no es válida.");
-            }
-            throw error;
-        }
+            .insert([{ id_cliente, id_empleado, total, estado, fecha_hora }])
+            .select().single();
+        if (error) throw error;
         return data;
     }
 
-    static async actualizar(id, datosPedido) {
-        const updates = {};
-        if (datosPedido.id_cliente) updates.id_cliente = parseInt(datosPedido.id_cliente);
-        if (datosPedido.id_empleado) updates.id_empleado = parseInt(datosPedido.id_empleado);
-        if (datosPedido.fecha_hora) updates.fecha_hora = datosPedido.fecha_hora;
-        if (datosPedido.total) updates.total = parseFloat(datosPedido.total);
-        if (datosPedido.estado) updates.estado = datosPedido.estado;
 
-        const { data, error } = await supabase
+    static async crearConDetalles(datosPedido) {
+        const { id_cliente, id_empleado, total, estado, fecha_hora, items } = datosPedido;
+
+        const { data: pedidoData, error: pedidoError } = await supabase
             .from('pedidos')
-            .update(updates)
-            .eq('id_pedido', id)
+            .insert([{
+                id_cliente: parseInt(id_cliente),
+                id_empleado: parseInt(id_empleado),
+                total: parseFloat(total),
+                estado: estado || 'Pendiente',
+                fecha_hora: fecha_hora || new Date().toISOString()
+            }])
             .select()
             .single();
 
-        if (error) {
-            if (error.code === 'PGRST116') return null;
-            if (error.code === '23503') throw new Error("Una llave foránea (cliente o empleado) no es válida.");
-            console.error(`Error al actualizar pedido ID ${id}:`, error);
-            throw error;
+        if (pedidoError) throw pedidoError;
+
+        const idPedidoGenerado = pedidoData.id_pedido;
+
+
+        const detallesAInsertar = items.map(item => ({
+            id_pedido: idPedidoGenerado,
+            id_producto: item.id_producto,
+            cantidad: parseInt(item.cantidad),
+            subtotal: parseFloat(item.subtotal) 
+        }));
+
+        const { error: detallesError } = await supabase
+            .from('detalle_pedido')
+            .insert(detallesAInsertar);
+
+        if (detallesError) {
+            console.error("Error insertando detalles:", detallesError);
+            throw detallesError;
         }
+
+        return pedidoData;
+    }
+
+    static async actualizar(id, datosPedido) {
+        const { data, error } = await supabase.from('pedidos').update(datosPedido).eq('id_pedido', id).select().single();
+        if (error) throw error;
         return data;
     }
 
     static async eliminar(id) {
-        const { error, data } = await supabase
-            .from('pedidos')
-            .delete()
-            .eq('id_pedido', id)
-            .select();
-
-        if (error) {
-            console.error(`Error al eliminar pedido ID ${id}:`, error);
-            throw error;
-        }
-        return data;
+        const { error } = await supabase.from('pedidos').delete().eq('id_pedido', id);
+        if (error) throw error;
+        return true;
     }
 }
 

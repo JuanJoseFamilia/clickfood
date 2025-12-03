@@ -1,5 +1,5 @@
 import aiPredictionService from '../services/aiPredictionService.js';
-import pool from '../config/db.js'; // Usamos la conexión directa a la BD
+import pool from '../config/db.js'; 
 
 
 export const entrenarModelo = async (req, res) => {
@@ -11,7 +11,6 @@ export const entrenarModelo = async (req, res) => {
     fechaInicio.setMonth(fechaInicio.getMonth() - mesesHistorico);
 
 
-    // CONSULTA SQL: Obtener fecha de pedidos completados
     const query = `
       SELECT fecha_hora as fecha 
       FROM pedidos 
@@ -30,11 +29,9 @@ export const entrenarModelo = async (req, res) => {
       });
     }
 
-    // Convertir formato para la IA
     const datosLimpios = pedidosHistoricos.map(p => ({ fecha: p.fecha }));
     const datosPreparados = aiPredictionService.prepararDatosHistoricos(datosLimpios);
 
-    // Enviar a Python
     const resultado = await aiPredictionService.entrenarModelo(restauranteId, datosPreparados);
 
     if (resultado.success) {

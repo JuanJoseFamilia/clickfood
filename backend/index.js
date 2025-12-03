@@ -3,8 +3,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-// --- IMPORTA TODAS TUS RUTAS ---
-import usuariosRouter from "./src/routes/usuarios.js";
+
+import usuariosRoutes from "./src/routes/usuariosRoutes.js";
 import productoRoutes from './src/routes/productoRoutes.js';
 import orderRoutes from './src/routes/pedidoRoutes.js';
 import reservaRoutes from './src/routes/reservaRoutes.js';
@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
     res.json({ mensaje: "API ClickFood funcionando" });
 });
 
-app.use("/usuarios", usuariosRouter);
+app.use("/usuarios", usuariosRoutes);
 app.use("/productos", productoRoutes);
 app.use("/pedidos", orderRoutes);
 app.use("/reservas", reservaRoutes);
@@ -43,8 +43,8 @@ app.listen(PORT, () => {
     console.log(`[CLI]   GET  http://localhost:${PORT}/clientes`);
     console.log(`[MESA]  GET  http://localhost:${PORT}/mesas`);
     console.log(`[EMP]   GET  http://localhost:${PORT}/empleados`);
-    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/health`);     // ← NUEVO
-    console.log(`[AI]    POST http://localhost:${PORT}/api/predictions/train/:id`);  // ← NUEVO
-    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/:id/week`);   // ← NUEVO
+    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/health`);     
+    console.log(`[AI]    POST http://localhost:${PORT}/api/predictions/train/:id`);  
+    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/:id/week`);   
     console.log("-----------------------------------------");
 });

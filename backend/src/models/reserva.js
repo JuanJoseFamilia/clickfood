@@ -2,58 +2,52 @@
 import { supabase } from '../config/supabase.js';
 
 class Reserva {
-    static async obtenerTodas() {
+static async obtenerTodas() {
         const { data, error } = await supabase
             .from('reservas')
             .select(`
-                id_reserva, 
-                fecha_hora, 
-                id_mesa,
-                id_cliente,
-                estado,
-                clientes (
-                    id_cliente, 
-                    telefono, 
-                    usuarios (nombre, email) 
-                ),
-                mesas (
-                    numero, 
-                    capacidad
-                )
-            `)
+                id_reserva, 
+                fecha_hora, 
+                id_mesa,
+                id_cliente,
+                estado,
+                clientes (
+                    usuarios (nombre, email) 
+                ),
+                mesas (
+                    numero, 
+                    capacidad
+                )
+            `)
             .order('fecha_hora', { ascending: true });
 
         if (error) {
             console.error('Error al obtener todas las reservas:', error);
             throw error;
         }
-        return data;
+
+        return data.map(r => ({
+            ...r,
+            nombre_cliente: r.clientes?.usuarios?.nombre || 'Desconocido',
+            email_cliente: r.clientes?.usuarios?.email || '',
+            numero_mesa: r.mesas ? `Mesa ${r.mesas.numero} (Cap: ${r.mesas.capacidad})` : 'Mesa no asignada',
+            capacidad_mesa: r.mesas?.capacidad || 0
+        }));
     }
 
     static async obtenerPorId(id) {
         const { data, error } = await supabase
             .from('reservas')
             .select(`
-                id_reserva,
-                fecha_hora,
-                id_mesa,
-                id_cliente,
-                estado,
-                clientes (
-                    telefono,
-                    usuarios (nombre, email)
-                ),
-                mesas (
-                    numero,
-                    capacidad
-                )
-            `)
+                id_reserva, fecha_hora, id_mesa, id_cliente, estado,
+                clientes (usuarios (nombre)),
+                mesas (numero)
+            `)
             .eq('id_reserva', id)
             .single();
 
         if (error) {
             if (error.code === 'PGRST116') return null;
-            console.error('Error al obtener reserva por ID:', error);
             throw error;
         }
         return data;
@@ -68,57 +62,33 @@ class Reserva {
                 fecha_hora: reserva.fecha_hora,
                 estado: reserva.estado || 'Pendiente'
             }])
-            .select()
-            .single();
+            .select().single();
 
-        if (error) {
-            console.error('Error al crear reserva:', error);
-            throw error;
-        }
+        if (error) throw error;
         return data;
     }
 
     static async actualizar(id, datosReserva) {
         const updates = {};
+        if (datosReserva.id_cliente) updates.id_cliente = parseInt(datosReserva.id_cliente);
+        if (datosReserva.id_mesa) updates.id_mesa = parseInt(datosReserva.id_mesa);
+        if (datosReserva.fecha_hora) updates.fecha_hora = datosReserva.fecha_hora;
+        if (datosReserva.estado) updates.estado = datosReserva.estado;
 
-        if (datosReserva.id_cliente !== undefined) updates.id_cliente = parseInt(datosReserva.id_cliente);
-        if (datosReserva.id_mesa !== undefined) updates.id_mesa = parseInt(datosReserva.id_mesa);
-        if (datosReserva.fecha_hora !== undefined) {
-            updates.fecha_hora = datosReserva.fecha_hora === '' ? null : datosReserva.fecha_hora;
-        }
-        if (datosReserva.estado !== undefined) updates.estado = datosReserva.estado;
-
-        const { data, error } = await supabase
-            .from('reservas')
-            .update(updates)
-            .eq('id_reserva', id)
-            .select()
-            .single();
-
-        if (error) {
-            if (error.code === 'PGRST116') return null;
-            console.error('Error al actualizar reserva:', error);
-            throw error;
-        }
+        const { data, error } = await supabase.from('reservas').update(updates).eq('id_reserva', id).select().single();
+        if (error) throw error;
         return data;
     }
 
     static async eliminar(id) {
-        const { error, count } = await supabase
-            .from('reservas')
-            .delete()
-            .eq('id_reserva', id);
-
-        if (error) {
-            console.error('Error al eliminar reserva:', error);
-            throw error;
-        }
-        return count > 0;
+        const { error, count } = await supabase.from('reservas').delete().eq('id_reserva', id);
+        if (error) throw error;
+        return count > 0; 
     }
 
     static async verificarDisponibilidad(id_mesa, fecha_hora) {
         const fechaInicio = new Date(fecha_hora);
-        const fechaFin = new Date(fechaInicio.getTime() + 2 * 60 * 60 * 1000); // 2 horas después
+        const fechaFin = new Date(fechaInicio.getTime() + 2 * 60 * 60 * 1000); 
 
         const { data, error } = await supabase
             .from('reservas')
@@ -131,7 +101,6 @@ class Reserva {
         if (error) throw error;
         return data.length === 0;
     }
-
     static async obtenerReservasDelDia() {
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);

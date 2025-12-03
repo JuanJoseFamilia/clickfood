@@ -1,6 +1,21 @@
 // backend/src/controllers/pedidoController.js
 import Pedido from '../models/pedido.js';
 
+
+export const obtenerDetallesPedido = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const detalles = await Pedido.obtenerDetalles(id);
+        res.status(200).json(detalles);
+    } catch (error) {
+        console.error('Error en obtenerDetallesPedido:', error);
+        res.status(500).json({
+            message: 'Error al obtener los detalles del pedido',
+            error: error.message
+        });
+    }
+};
+
 // Obtener todos los pedidos
 export const obtenerPedidos = async (req, res) => {
     try {
@@ -33,23 +48,23 @@ export const obtenerPedidoPorId = async (req, res) => {
     }
 };
 
-// Crear un nuevo pedido
 export const crearPedido = async (req, res) => {
     try {
-        const { id_cliente, id_empleado, total, estado, fecha_hora } = req.body;
+        const { id_cliente, id_empleado, total, estado, fecha_hora, items } = req.body;
 
-        if (!id_cliente || !id_empleado || total === undefined) {
+        if (!id_cliente || !id_empleado || !items || items.length === 0) {
             return res.status(400).json({
-                message: 'Por favor complete todos los campos requeridos (id_cliente, id_empleado, total)'
+                message: 'Faltan datos requeridos o el pedido no tiene productos.'
             });
         }
 
-        const nuevoPedido = await Pedido.crear({
-            id_cliente: parseInt(id_cliente),
-            id_empleado: parseInt(id_empleado),
-            total: parseFloat(total),
-            estado: estado || 'Pendiente',
-            fecha_hora: fecha_hora || new Date().toISOString()
+        const nuevoPedido = await Pedido.crearConDetalles({
+            id_cliente,
+            id_empleado,
+            total,
+            estado,
+            fecha_hora,
+            items
         });
 
         res.status(201).json(nuevoPedido);

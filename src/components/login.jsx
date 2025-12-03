@@ -1,4 +1,3 @@
-import '../styles/index.css';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -34,11 +33,21 @@ export default function LoginPage() {
     
         console.log('Usuario:', data.usuario);
         
-        sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+        localStorage.setItem('usuario', JSON.stringify(data.usuario));
         
         setTimeout(() => {
-          window.location.href = '/dasboard';
+
+          const rol = data.usuario.rol || ''; 
+
+          if (rol === 'cliente') {
+            window.location.href = '/reservas';
+          } else if (rol === 'administrador' || rol === 'admin') {
+            window.location.href = '/dasboard';
+          } else {
+            window.location.href = '/dasboard';
+          }
         }, 1000);
+        
       } else {
         setMensaje(data.error || "Error al iniciar sesión");
       }
@@ -60,7 +69,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="flex bg-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-4xl">
         
-
         <div className="w-1/2 bg-orange-500 flex items-center justify-center p-12">
           <div className="text-center">
             <div className="text-7xl font-bold text-white mb-4">Click</div>
@@ -68,7 +76,6 @@ export default function LoginPage() {
             <div className="text-6xl ml-8 mt-4">🍴</div>
           </div>
         </div>
-
 
         <div className="w-1/2 flex flex-col items-center justify-center px-16 py-12">
           <div className="w-full">
