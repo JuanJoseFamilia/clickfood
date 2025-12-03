@@ -603,6 +603,8 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
   const estadosMesa = ['Disponible', 'Reservada', 'Limpieza pendiente'];
   const estadosPedido = ['Pendiente', 'En preparación', 'Listo para entrega', 'Completado', 'Cancelado'];
   const estadosReserva = ['Pendiente', 'Confirmada', 'Cancelada', 'Completada'];
+  const categoriasProducto = ['Hamburguesas', 'Pizzas', 'Bebidas', 'Postres', 'Entradas', 'Salsas', 'Ensaladas'];
+  const estadosProducto = ['Activo', 'Inactivo'];
 
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
@@ -638,6 +640,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
     const initialData = {};
     fields.forEach(field => initialData[field] = '');
     if (endpoint === 'usuarios') initialData['contraseña'] = '';
+    if (title === 'Productos') initialData['estado'] = 'Activo';
     setFormData(initialData);
     setShowModal(true);
   };
@@ -781,52 +784,54 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
             </div>
             
             <div className="p-6 space-y-4">
-              {fields.map(field => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{formatLabel(field)}</label>
-                  
+             {fields.map(field => (
+              <div key={field}>
+                <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{formatLabel(field)}</label>
 
-                  {(title === "Usuarios" && field === "rol") || 
-                   (title === "Mesas" && field === "estado") || 
-                   (title === "Pedidos" && field === "estado") ||
-                   (title === "Reservas" && field === "estado") ? (
-                    <select
-                      name={field}
-                      value={formData[field] || ''}
-                      onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                      required
-                    >
-                      <option value="" disabled>Seleccione...</option>
-                      {(title === "Usuarios" && field === "rol" ? rolesPermitidos : 
-                        title === "Mesas" ? estadosMesa : 
-                        title === "Reservas" ? estadosReserva :
-                        estadosPedido
-                      ).map(option => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : field.includes('fecha') ? (
-                    <input
-                      type="datetime-local"
-                      name={field}
-                      value={formData[field] || ''}
-                      onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                      required
-                    />
-                  ) : (
-                    <input
-                      type={field.includes('email') ? 'email' : field.includes('contraseña') ? 'password' : 'text'}
-                      name={field}
-                      value={formData[field] || ''}
-                      onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                      required={!currentItem || field !== 'contraseña'}
-                    />
-                  )}
-                </div>
-              ))}
+                {(title === "Usuarios" && field === "rol") || 
+                 (title === "Mesas" && field === "estado") || 
+                 (title === "Pedidos" && field === "estado") ||
+                 (title === "Reservas" && field === "estado") ||
+                 (title === "Productos" && (field === "categoria" || field === "estado")) ? (
+                  <select
+                    name={field}
+                    value={formData[field] || ''}
+                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    required
+                  >
+                    <option value="" disabled>Seleccione...</option>
+                    {(title === "Usuarios" && field === "rol" ? rolesPermitidos : 
+                      title === "Mesas" ? estadosMesa : 
+                      title === "Reservas" ? estadosReserva :
+                      title === "Productos" && field === "categoria" ? categoriasProducto : 
+                      title === "Productos" && field === "estado" ? estadosProducto :       
+                      estadosPedido
+                    ).map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                ) : field.includes('fecha') ? (
+                  <input
+                    type="datetime-local"
+                    name={field}
+                    value={formData[field] || ''}
+                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                ) : (
+                  <input
+                    type={field.includes('email') ? 'email' : field.includes('contraseña') ? 'password' : 'text'}
+                    name={field}
+                    value={formData[field] || ''}
+                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    required={!currentItem || field !== 'contraseña'}
+                  />
+                )}
+              </div>
+            ))}
 
               {title === "Usuarios" && (
                 <div>
@@ -885,7 +890,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
 
 
 function ProductCRUDModal({ onClose }) {
-  return <CRUDModal title="Productos" icon={Package} endpoint="productos" onClose={onClose} fields={['nombre', 'categoria', 'precio', 'stock']} />;
+  return <CRUDModal title="Productos" icon={Package} endpoint="productos" onClose={onClose} fields={['nombre', 'categoria', 'precio', 'stock','estado']} />;
 }
 
 function OrderCRUDModal({ onClose }) {

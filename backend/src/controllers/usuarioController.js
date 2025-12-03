@@ -3,46 +3,41 @@ import bcrypt from "bcrypt";
 import { supabase } from "../config/supabase.js";
 
 //REGISTRO
+// src/controllers/usuarioController.js
+
 export const registrarUsuario = async (req, res) => {
   try {
     const { nombre, email, contraseña, rol } = req.body;
+    // ... (validaciones y hash de contraseña igual que antes) ...
 
-    if (!nombre || !email || !contraseña || !rol) {
-      return res.status(400).json({ error: "Todos los campos son obligatorios." });
-    }
-
-    const { data: existente, error: existeError } = await supabase
+    // 1. INSERTAR USUARIO
+    const { data: usuarioData, error: usuarioError } = await supabase
       .from("usuarios")
-      .select("email")
-      .eq("email", email);
+      .insert([{ nombre, email, contraseña: hashedPassword, rol }])
+      .select("id_usuario, nombre, email, rol")
+      .single(); // Usamos single() para obtener el objeto directo
 
-    if (existeError) throw existeError;
+    if (usuarioError) throw usuarioError;
 
-    if (existente.length > 0) {
-      return res.status(400).json({ error: "El correo ya esta registrado." });
+    // 2. ¡TRUCO! CREAR PERFIL DE CLIENTE AUTOMÁTICAMENTE
+    // Si el rol es 'Cliente', le creamos su fila en la tabla clientes de una vez
+    if (rol === 'cliente') {
+        const { error: clienteError } = await supabase
+            .from("clientes")
+            .insert([{ 
+                id_usuario: usuarioData.id_usuario, // Conectamos con el usuario recién creado
+                telefono: "", // Lo dejamos vacío para que lo llene luego
+                direccion: "" 
+            }]);
+        
+        if (clienteError) console.error("Error creando perfil cliente:", clienteError);
     }
-
-    const hashedPassword = await bcrypt.hash(contraseña, 10);
-
-    // Insertar usuario
-    const { data, error } = await supabase
-      .from("usuarios")
-      .insert([
-        {
-          nombre,
-          email,
-          contraseña: hashedPassword,
-          rol,
-        },
-      ])
-      .select("id_usuario, nombre, email, rol"); 
-
-    if (error) throw error;
 
     res.status(201).json({
       mensaje: "Usuario registrado correctamente",
-      usuario: data[0],
+      usuario: usuarioData,
     });
+
   } catch (err) {
     console.error("Error al registrar usuario:", err.message);
     res.status(500).json({ error: "Error al registrar usuario." });
@@ -50,7 +45,9 @@ export const registrarUsuario = async (req, res) => {
 };
 
 // LOGIN
+// LOGIN
 export const loginUsuario = async (req, res) => {
+  console.log("--- INICIO LOGIN ---"); // 1. Ver que arranca
   try {
     const { email, contraseña } = req.body;
 
@@ -58,7 +55,7 @@ export const loginUsuario = async (req, res) => {
       return res.status(400).json({ error: "Email y contraseña son obligatorios." });
     }
 
-    // Buscar usuario por email
+    // 1. Buscar usuario
     const { data: usuario, error: usuarioError } = await supabase
       .from("usuarios")
       .select("*")
@@ -66,32 +63,50 @@ export const loginUsuario = async (req, res) => {
       .single();
 
     if (usuarioError || !usuario) {
-      if (usuarioError && usuarioError.code === 'PGRST116') {
-        return res.status(401).json({ error: "Credenciales incorrectas." });
-      }
+      console.log("Error buscando usuario:", usuarioError);
       return res.status(401).json({ error: "Credenciales incorrectas." });
     }
 
-    // Verificar contraseña
+    // 2. Verificar contraseña
     const contraseñaValida = await bcrypt.compare(contraseña, usuario.contraseña);
-
     if (!contraseñaValida) {
       return res.status(401).json({ error: "Credenciales incorrectas." });
     }
 
-    // Respuesta exitosa 
+    console.log(`Usuario encontrado ID: ${usuario.id_usuario}. Buscando perfil de cliente...`);
+
+    // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+    // 3. Buscar datos del Cliente y CAPTURAR EL ERROR
+    const { data: cliente, error: clienteError } = await supabase
+      .from("clientes")
+      .select("id_cliente, telefono")
+      .eq("id_usuario", usuario.id_usuario)
+      .maybeSingle();
+
+    // IMPRIMIR LO QUE RESPONDE SUPABASE
+    if (clienteError) {
+        console.error("🔴 ERROR CRÍTICO al buscar cliente:", clienteError);
+        // Si sale este error en tu consola, es 100% problema de permisos/RLS
+    } else {
+        console.log("🟢 Respuesta de Clientes:", cliente); 
+        // Si aquí sale null, es que el ID no coincide. Si sale datos, funcionó.
+    }
+
+    // 4. Respuesta
     return res.status(200).json({
       mensaje: "Login exitoso",
       usuario: {
-        id: usuario.id,
+        id_usuario: usuario.id_usuario,
+        id_cliente: cliente ? cliente.id_cliente : null, 
         nombre: usuario.nombre,
         email: usuario.email,
+        telefono: cliente ? cliente.telefono : "No registrado", 
         rol: usuario.rol
       }
     });
 
   } catch (err) {
-    console.error("Error al iniciar sesión:", err.message);
+    console.error("Error general en login:", err.message);
     res.status(500).json({ error: "Error al iniciar sesión." });
   }
 };

@@ -1,65 +1,31 @@
+// backend/src/routes/reservaRoutes.js
 import express from 'express';
-import { supabase } from '../config/supabase.js'; 
+// Importamos las funciones del controlador que ya contienen la lógica del JOIN y mapeo
+import { 
+    obtenerReservas, 
+    obtenerReservaPorId, 
+    crearReserva, 
+    actualizarReserva, 
+    eliminarReserva 
+} from '../controllers/reservaController.js';
 
 const router = express.Router();
 
-// OBTENER TODAS LAS RESERVAS
-router.get('/', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('reservas')
-            .select('*')
-            .order('fecha_hora', { ascending: true });
+// --- RUTAS CONECTADAS AL CONTROLADOR ---
 
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        console.error("Error al obtener reservas:", error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
+// GET /reservas - Usará obtenerReservas del controlador (que incluye el nombre_cliente)
+router.get('/', obtenerReservas);
 
-// CREAR NUEVA RESERVA
-router.post('/', async (req, res) => {
+// GET /reservas/:id
+router.get('/:id', obtenerReservaPorId);
 
-    const { id_cliente, id_mesa, fecha_hora, descripcion, comentarios } = req.body;
+// POST /reservas
+router.post('/', crearReserva);
 
-    console.log("--- Intentando crear reserva ---");
-    console.log("Datos:", { id_cliente, id_mesa, fecha_hora });
+// PUT /reservas/:id
+router.put('/:id', actualizarReserva);
 
-
-    if (!id_cliente || !id_mesa || !fecha_hora) {
-        return res.status(400).json({ message: 'Faltan datos obligatorios (Cliente, Mesa o Fecha)' });
-    }
-
-    try {
-        const { data, error } = await supabase
-            .from('reservas')
-            .insert([
-                { 
-                    id_cliente: id_cliente, 
-                    id_mesa: id_mesa, 
-                    fecha_hora: fecha_hora, 
-                    estado: 'Pendiente',
-                    descripcion: descripcion || 'Cena Casual',
-                    comentarios: comentarios || ''
-                }
-            ])
-            .select() 
-            .single();
-
-        if (error) {
-            console.error('Error de Supabase:', error.message);
-            throw error;
-        }
-
-        console.log("Reserva creada exitosamente ID:", data?.id_reserva);
-        res.status(201).json({ message: 'Reserva creada exitosamente', reserva: data });
-
-    } catch (error) {
-        console.error('Error al insertar reserva:', error);
-        res.status(500).json({ message: 'Error al crear la reserva', error: error.message });
-    }
-});
+// DELETE /reservas/:id
+router.delete('/:id', eliminarReserva);
 
 export default router;

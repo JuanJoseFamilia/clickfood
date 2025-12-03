@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, MapPin, Phone, Mail, Check, ChevronLeft, ChevronRight, Utensils, AlertCircle, Gift } from 'lucide-react';
+
+import { Calendar, Clock, Users, MapPin, Phone, Mail, Check, ChevronLeft, ChevronRight, Utensils, AlertCircle, Gift, LogOut } from 'lucide-react';
 
 function ReservasClientePage() {
   const [step, setStep] = useState(1);
@@ -28,68 +29,71 @@ function ReservasClientePage() {
       if (data) {
         try {
           const usuarioEncontrado = JSON.parse(data);
-          console.log("Datos en LocalStorage:", usuarioEncontrado);
-
-
-          const idParaReserva = usuarioEncontrado.id_cliente_real || usuarioEncontrado.id_cliente;
-
-          if (!idParaReserva) {
-             console.error("ALERTA: Este usuario no tiene ID de Cliente vinculado. La reserva podría fallar.");
-          }
+          
+          const idParaReserva = usuarioEncontrado.id_cliente || 
+                                usuarioEncontrado.id_cliente_real || 
+                                usuarioEncontrado.id_usuario;
 
           setReservaData(prev => ({
             ...prev,
             id_cliente: idParaReserva, 
             nombre: usuarioEncontrado.nombre || '',
             email: usuarioEncontrado.email || '',
-            telefono: usuarioEncontrado.telefono || ''
+            telefono: usuarioEncontrado.telefono || '' 
           }));
         } catch (e) {
           console.error("Error al leer usuario:", e);
         }
-      } else {
-        console.warn("No hay usuario en LocalStorage. Debes iniciar sesión.");
       }
     };
-
-    // 2. Cargar Mesas
-    const fetchMesas = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/mesas');
-        if (response.ok) {
-          const data = await response.json();
-          setMesas(data.filter(m => m.estado === 'Disponible'));
-        }
-      } catch (error) {
-        console.error('Error al cargar mesas:', error);
-      }
-    };
-
     cargarUsuario();
-    fetchMesas();
   }, []);
 
-  // Generar opciones de hora
   const horasDisponibles = [];
   for (let i = 12; i <= 22; i++) {
     horasDisponibles.push(`${i.toString().padStart(2, '0')}:00`);
     if (i < 22) horasDisponibles.push(`${i.toString().padStart(2, '0')}:30`);
   }
 
+  // Lógica del backend para buscar mesas
+  const buscarMesasDisponibles = async () => {
+    if (!reservaData.fecha || !reservaData.hora) {
+      alert("Por favor selecciona fecha y hora primero");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        fecha: reservaData.fecha,
+        hora: reservaData.hora
+      });
+      const response = await fetch(`http://localhost:5000/mesas/disponibles?${params}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMesas(data); 
+        setStep(2);     
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || 'No se pudieron cargar las mesas'}`);
+      }
+    } catch (error) {
+      console.error("Error buscando mesas:", error);
+      alert("Error de conexión con el servidor");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
-    
-
     if (!reservaData.id_cliente) {
-      alert("Error Crítico: No se encontró un ID de Cliente válido para este usuario.\n\nSolución: Cierra sesión y vuelve a entrar para actualizar tus datos.");
+      alert("Error Crítico: No se encontró un ID de Cliente válido.");
       setIsLoading(false);
       return;
     }
-
     const fechaHora = `${reservaData.fecha}T${reservaData.hora}:00`;
     
-    console.log("Enviando reserva con ID Cliente:", reservaData.id_cliente); 
-
     try {
       const response = await fetch('http://localhost:5000/reservas', {
         method: 'POST',
@@ -104,7 +108,6 @@ function ReservasClientePage() {
       });
 
       const result = await response.json();
-
       if (response.ok) {
         setReservaConfirmada(true);
         setStep(4);
@@ -119,10 +122,19 @@ function ReservasClientePage() {
     }
   };
 
+
+  const handleLogout = () => {
+    if(window.confirm("¿Seguro que quieres cerrar sesión?")) {
+      localStorage.removeItem('usuario');
+      localStorage.removeItem('token');   
+      window.location.href = '/';    
+    }
+  };
+
   const nextStep = () => {
-    if (step === 1 && (!reservaData.fecha || !reservaData.hora)) {
-      alert('Por favor selecciona fecha y hora');
-      return;
+    if (step === 1) {
+      buscarMesasDisponibles(); 
+      return; 
     }
     if (step === 2 && !reservaData.id_mesa) {
       alert('Por favor selecciona una mesa');
@@ -136,19 +148,31 @@ function ReservasClientePage() {
   };
 
   const prevStep = () => setStep(step - 1);
-  const getMesaSeleccionada = () => mesas.find(m => m.id_mesa === reservaData.id_mesa);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
 
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-8 shadow-lg">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Utensils size={48} />
-            <div>
-              <h1 className="text-4xl font-bold">ClickFood</h1>
-              <p className="text-orange-100 text-lg">Reserva tu mesa en minutos</p>
+          
+
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Utensils size={48} />
+              <div>
+                <h1 className="text-4xl font-bold">ClickFood</h1>
+                <p className="text-orange-100 text-lg hidden sm:block">Reserva tu mesa en minutos</p>
+              </div>
             </div>
+
+
+            <button 
+              onClick={handleLogout}
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all border border-white/40 shadow-sm"
+            >
+              <LogOut size={20} />
+              <span className="font-medium">Salir</span>
+            </button>
           </div>
           
 
@@ -186,12 +210,10 @@ function ReservasClientePage() {
 
 
       <div className="max-w-4xl mx-auto px-6 py-12">
-        
 
         {step === 1 && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">¿Cuándo quieres venir?</h2>
-            
             <div className="space-y-6 mt-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -252,7 +274,9 @@ function ReservasClientePage() {
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Elige tu mesa</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {mesas.filter(m => m.capacidad >= reservaData.personas).map(mesa => (
+              {mesas
+                .filter(m => Number(m.capacidad) >= Number(reservaData.personas))
+                .map(mesa => (
                 <button
                   key={mesa.id_mesa}
                   onClick={() => setReservaData({ ...reservaData, id_mesa: mesa.id_mesa })}
@@ -269,21 +293,21 @@ function ReservasClientePage() {
                   <p className="text-gray-600">Capacidad: {mesa.capacidad} personas</p>
                 </button>
               ))}
-              {mesas.filter(m => m.capacidad >= reservaData.personas).length === 0 && (
+
+              {mesas.filter(m => Number(m.capacidad) >= Number(reservaData.personas)).length === 0 && (
                 <p className="col-span-2 text-center text-gray-500 py-8">
-                  No hay mesas disponibles para ese número de personas.
+                  No hay mesas disponibles para ese número de personas en este horario.
                 </p>
               )}
             </div>
           </div>
         )}
 
-
+        {/* PASO 3 */}
         {step === 3 && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Tus Datos</h2>
             
-
             {!reservaData.id_cliente && (
               <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
                 <div className="flex">
@@ -369,7 +393,7 @@ function ReservasClientePage() {
           </div>
         )}
 
-
+        {/* PASO 4 */}
         {step === 4 && reservaConfirmada && (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -386,7 +410,7 @@ function ReservasClientePage() {
           </div>
         )}
 
-
+        {/* NAVEGACIÓN */}
         {!reservaConfirmada && (
           <div className="flex justify-between mt-8">
             {step > 1 && (

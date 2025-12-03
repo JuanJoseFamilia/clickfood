@@ -68,7 +68,7 @@ export const actualizarMesa = async (req, res) => {
     });
 
     if (!mesaActualizada) {
-      return res.status(4404).json({ message: 'Mesa no encontrada' });
+      return res.status(404).json({ message: 'Mesa no encontrada' });
     }
     res.status(200).json(mesaActualizada);
   } catch (error) {
@@ -76,6 +76,26 @@ export const actualizarMesa = async (req, res) => {
     console.error("Error devuelto:", error);
     res.status(500).json({ message: 'Error al actualizar la mesa', error: error.message });
   }
+};
+
+export const getMesasDisponibles = async (req, res) => {
+    try {
+        const { fecha, hora } = req.query; 
+
+        if (!fecha || !hora) {
+            return res.status(400).json({ message: "Faltan fecha y hora" });
+        }
+
+        // Formato esperado por Supabase timestamp: "YYYY-MM-DDTHH:MM:SS"
+        const fechaHora = `${fecha}T${hora}:00`; 
+
+        const mesas = await Mesa.obtenerDisponibles(fechaHora); 
+        res.status(200).json(mesas);
+
+    } catch (error) {
+        console.error("Error buscando disponibles:", error);
+        res.status(500).json({ message: "Error interno al buscar mesas" });
+    }
 };
 
 // Eliminar una mesa
