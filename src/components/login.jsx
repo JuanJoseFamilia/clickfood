@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Usamos el hook de navegación
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -7,6 +8,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
+  
+  const navigate = useNavigate(); // Inicializar hook
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
@@ -31,20 +34,19 @@ export default function LoginPage() {
       if (res.ok) {
         setMensaje("¡Login exitoso! Redirigiendo...");
     
-        console.log('Usuario:', data.usuario);
-        
+        // Guardar usuario en localStorage
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
         
+        // Redirección basada en el rol
         setTimeout(() => {
-
           const rol = data.usuario.rol || ''; 
 
           if (rol === 'cliente') {
-            window.location.href = '/reservas';
-          } else if (rol === 'administrador' || rol === 'admin') {
-            window.location.href = '/dasboard';
+            navigate('/cliente/home'); // <--- AHORA VA AL HOME DE CLIENTE
+          } else if (rol === 'administrador' || rol === 'admin' || rol === 'empleado') {
+            navigate('/dasboard');
           } else {
-            window.location.href = '/dasboard';
+            navigate('/dasboard');
           }
         }, 1000);
         
@@ -69,7 +71,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="flex bg-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-4xl">
         
-        <div className="w-1/2 bg-orange-500 flex items-center justify-center p-12">
+        {/* Logo */}
+        <div className="w-1/2 bg-orange-500  items-center justify-center p-12 hidden md:flex">
           <div className="text-center">
             <div className="text-7xl font-bold text-white mb-4">Click</div>
             <div className="text-7xl font-bold text-white">Food</div>
@@ -77,16 +80,15 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="w-1/2 flex flex-col items-center justify-center px-16 py-12">
+        {/* Formulario */}
+        <div className="w-full md:w-1/2 flex flex-col items-center justify-center px-8 sm:px-16 py-12">
           <div className="w-full">
-
             <div className="mb-12">
               <div className="text-sm text-gray-300 mb-2">Bienvenido de nuevo!</div>
               <h1 className="text-4xl font-bold text-white">Inicia sesión</h1>
             </div>
 
             <form onSubmit={handleLogin} className="w-full">
-
               <div className="relative mb-4">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,22 +132,13 @@ export default function LoginPage() {
                 </button>
               </div>
 
-
-              <div className="text-right mb-6">
-                <button type="button" className="text-gray-300 text-sm hover:text-orange-500 transition">
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-
-
               <button
                 type="submit"
                 disabled={cargando}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
               >
                 {cargando ? 'Iniciando sesión...' : 'Iniciar sesión'}
               </button>
-
 
               {mensaje && (
                 <p className={`mt-4 text-center ${mensaje.includes('exitoso') ? 'text-green-400' : 'text-red-400'}`}>
@@ -154,14 +147,11 @@ export default function LoginPage() {
               )}
             </form>
 
-
             <div className="mt-8 text-center">
               <p className="text-gray-300">
                 ¿No tiene cuenta?{' '}
-                <a href="/registrarse">
-                  <button className="text-orange-500 hover:text-orange-400 font-semibold transition" type="button">
+                <a href="/registrarse" className="text-orange-500 hover:text-orange-400 font-semibold transition">
                     Regístrate ahora
-                  </button>
                 </a>
               </p>
             </div>
