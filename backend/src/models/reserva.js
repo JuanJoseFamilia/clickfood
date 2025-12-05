@@ -60,7 +60,9 @@ static async obtenerTodas() {
                 id_cliente: parseInt(reserva.id_cliente),
                 id_mesa: parseInt(reserva.id_mesa),
                 fecha_hora: reserva.fecha_hora,
-                estado: reserva.estado || 'Pendiente'
+                estado: reserva.estado || 'Pendiente',
+                descripcion: reserva.descripcion,
+                comentarios: reserva.comentarios
             }])
             .select().single();
 

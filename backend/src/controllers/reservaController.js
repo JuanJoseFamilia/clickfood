@@ -39,7 +39,7 @@ export const obtenerReservaPorId = async (req, res) => {
 // Crear una nueva reserva
 export const crearReserva = async (req, res) => {
     try {
-        const { id_cliente, id_mesa, fecha_hora, estado } = req.body;
+        const { id_cliente, id_mesa, fecha_hora, estado, descripcion, comentarios } = req.body;
 
         if (!id_cliente || !id_mesa || !fecha_hora) {
             return res.status(400).json({
@@ -58,7 +58,9 @@ export const crearReserva = async (req, res) => {
             id_cliente,
             id_mesa,
             fecha_hora,
-            estado: estado || 'Pendiente'
+            estado: estado || 'Pendiente',
+            descripcion: descripcion || 'Cena Casual', 
+            comentarios: comentarios || ''
         });
 
         res.status(201).json(nuevaReserva);
