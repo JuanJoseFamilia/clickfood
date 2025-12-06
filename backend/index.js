@@ -12,6 +12,7 @@ import clienteRoutes from './src/routes/clienteRoutes.js';
 import mesaRoutes from './src/routes/mesaRoutes.js';
 import empleadoRoutes from './src/routes/empleadoRoutes.js';
 import predictionRoutes from './src/routes/predictionRoutes.js';
+import dashboardRoutes from './src/routes/dashboardRoutes.js';
 
 dotenv.config({ path: "./.env" });
 
@@ -31,6 +32,7 @@ app.use("/clientes", clienteRoutes);
 app.use("/mesas", mesaRoutes);
 app.use("/empleados", empleadoRoutes);
 app.use('/api/predictions', predictionRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
@@ -43,8 +45,13 @@ app.listen(PORT, () => {
     console.log(`[CLI]   GET  http://localhost:${PORT}/clientes`);
     console.log(`[MESA]  GET  http://localhost:${PORT}/mesas`);
     console.log(`[EMP]   GET  http://localhost:${PORT}/empleados`);
-    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/health`);     
-    console.log(`[AI]    POST http://localhost:${PORT}/api/predictions/train/:id`);  
-    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/:id/week`);   
+    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/health`);
+    console.log(`[AI]    POST http://localhost:${PORT}/api/predictions/train/:id`);
+    console.log(`[AI]    GET  http://localhost:${PORT}/api/predictions/:id/week`);
+    console.log(`[DASH]  GET  http://localhost:${PORT}/dashboard/estadisticas`);
+    console.log(`[DASH]  GET  http://localhost:${PORT}/dashboard/ventas-diarias`);
+    console.log(`[DASH]  GET  http://localhost:${PORT}/dashboard/categorias-mas-vendidas`);
+    console.log(`[DASH]  GET  http://localhost:${PORT}/dashboard/proximas-reservas`);
+    console.log(`[DASH]  GET  http://localhost:${PORT}/dashboard/ultimos-movimientos`);
     console.log("-----------------------------------------");
 });
