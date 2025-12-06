@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-
-import { Calendar, Clock, Users, MapPin, Phone, Mail, Check, ChevronLeft, ChevronRight, Utensils, AlertCircle, Gift, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Clock, Users, MapPin, Phone, Mail, Check, ChevronLeft, ChevronRight, Utensils, AlertCircle, Gift, LogOut, Home } from 'lucide-react';
 
 function ReservasClientePage() {
+  const navigate = useNavigate(); 
   const [step, setStep] = useState(1);
   const [mesas, setMesas] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,16 +156,14 @@ function ReservasClientePage() {
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-8 shadow-lg">
         <div className="max-w-4xl mx-auto px-6">
           
-
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/cliente/home')}>
               <Utensils size={48} />
               <div>
                 <h1 className="text-4xl font-bold">ClickFood</h1>
                 <p className="text-orange-100 text-lg hidden sm:block">Reserva tu mesa en minutos</p>
               </div>
             </div>
-
 
             <button 
               onClick={handleLogout}
@@ -175,7 +174,6 @@ function ReservasClientePage() {
             </button>
           </div>
           
-
           {!reservaConfirmada && (
             <div className="flex items-center justify-between mt-8">
               {[
@@ -207,7 +205,6 @@ function ReservasClientePage() {
           )}
         </div>
       </div>
-
 
       <div className="max-w-4xl mx-auto px-6 py-12">
 
@@ -269,7 +266,6 @@ function ReservasClientePage() {
           </div>
         )}
 
-
         {step === 2 && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Elige tu mesa</h2>
@@ -303,7 +299,6 @@ function ReservasClientePage() {
           </div>
         )}
 
-        {/* PASO 3 */}
         {step === 3 && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Tus Datos</h2>
@@ -362,7 +357,7 @@ function ReservasClientePage() {
               </div>
 
               <div className="pt-4 border-t border-gray-100">
-                <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <label className=" text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
                   <Gift size={18} className="text-orange-500"/>
                   Motivo de la Reserva *
                 </label>
@@ -393,7 +388,7 @@ function ReservasClientePage() {
           </div>
         )}
 
-        {/* PASO 4 */}
+        {/* PASO 4: CONFIRMACIÓN - AQUI ESTÁ EL CAMBIO */}
         {step === 4 && reservaConfirmada && (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -401,12 +396,23 @@ function ReservasClientePage() {
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">¡Reserva Confirmada!</h2>
             <p className="text-gray-600 mb-8">Gracias, {reservaData.nombre}. Te esperamos.</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg"
-            >
-              Nueva Reserva
-            </button>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => navigate('/cliente/home')} // <--- BOTÓN VOLVER AL HOME
+                className="w-full sm:w-auto px-8 py-4 border-2 border-gray-300 hover:border-gray-400 text-gray-600 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                <Home size={20} />
+                Volver al Inicio
+              </button>
+
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg"
+              >
+                Nueva Reserva
+              </button>
+            </div>
           </div>
         )}
 
