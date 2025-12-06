@@ -1,7 +1,7 @@
 import { BarChart, Bar, XAxis, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Tooltip, YAxis, CartesianGrid, LineChart, Line, Legend, ReferenceLine } from 'recharts';
 import { FileText, DollarSign, Users, CreditCard, Plus, AlertTriangle, ChevronRight, LogOut, Search, Edit2, Trash2, X, Save, Package, Bookmark, BrainCircuit, RefreshCw, Calendar, Clock, TrendingUp, Lightbulb, Activity, Sun, Snowflake, CloudSun, Leaf } from 'lucide-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { usePredictions } from '../hooks/usePredictions'; 
+import { usePredictions } from '../hooks/usePredictions';
 
 // --- HELPER FUNCTIONS ---
 function formatDateTimeLocal(timestamp) {
@@ -18,7 +18,7 @@ function formatDateTimeLocal(timestamp) {
 }
 
 function getSeasonAndType(date) {
-  const month = date.getMonth(); 
+  const month = date.getMonth();
   let season = 'Invierno';
   let icon = Snowflake;
   if (month >= 2 && month <= 4) { season = 'Primavera'; icon = Leaf; }
@@ -41,7 +41,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
   const [idCliente, setIdCliente] = useState('');
   const [idEmpleado, setIdEmpleado] = useState('');
   const [estado, setEstado] = useState('Pendiente');
-  
+
   const [selectedProductoId, setSelectedProductoId] = useState('');
   const [cantidad, setCantidad] = useState(1);
   const [cart, setCart] = useState([]);
@@ -54,10 +54,13 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
           fetch('http://localhost:5000/empleados'),
           fetch('http://localhost:5000/productos')
         ]);
-        
+
         setClientes(await resCli.json());
         setEmpleados(await resEmp.json());
-        setProductos(await resProd.json());
+        const allProds = await resProd.json();
+        // Filtrar productos sin stock o inactivos para que no aparezcan al crear pedidos
+        const disponibles = allProds.filter(p => (parseInt(p.stock) || 0) > 0 && (!p.estado || String(p.estado).toLowerCase() !== 'inactivo'));
+        setProductos(disponibles);
       } catch (error) {
         console.error("Error cargando datos para pedido", error);
       }
@@ -117,11 +120,12 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
       });
 
       if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.message || "Error al guardar");
+        const err = await response.json();
+        throw new Error(err.message || "Error al guardar");
       }
 
       alert("Pedido creado exitosamente");
+      try { window.dispatchEvent(new Event('dashboard:refresh')); } catch (e) { }
       if (onSaveSuccess) onSaveSuccess();
       onClose();
     } catch (error) {
@@ -135,7 +139,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full flex flex-col max-h-[90vh]">
         <div className="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Package className="text-orange-500"/> Nuevo Pedido
+            <Package className="text-orange-500" /> Nuevo Pedido
           </h2>
           <button onClick={onClose}><X className="text-gray-400 hover:text-gray-600" /></button>
         </div>
@@ -159,9 +163,9 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
               <select className="w-full border border-gray-300 rounded-lg p-2" value={idEmpleado} onChange={e => setIdEmpleado(e.target.value)}>
                 <option value="">Seleccione Empleado...</option>
                 {empleados.map(e => (
-                   <option key={e.id_empleado} value={e.id_empleado}>
-                     {e.nombre_usuario || e.usuarios?.nombre || `Empleado #${e.id_empleado}`}
-                   </option>
+                  <option key={e.id_empleado} value={e.id_empleado}>
+                    {e.nombre_usuario || e.usuarios?.nombre || `Empleado #${e.id_empleado}`}
+                  </option>
                 ))}
               </select>
             </div>
@@ -176,13 +180,13 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
           </div>
 
 
-          <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2"><Plus size={16}/> Agregar Productos</h3>
+          <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2"><Plus size={16} /> Agregar Productos</h3>
           <div className="flex flex-col md:flex-row gap-3 items-end mb-6 border-b pb-6">
             <div className="flex-1 w-full">
               <label className="block text-xs font-bold text-gray-500 mb-1">Producto</label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg p-2" 
-                value={selectedProductoId} 
+              <select
+                className="w-full border border-gray-300 rounded-lg p-2"
+                value={selectedProductoId}
                 onChange={e => setSelectedProductoId(e.target.value)}
               >
                 <option value="">-- Seleccionar producto --</option>
@@ -194,71 +198,71 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
               </select>
             </div>
             <div className="w-24">
-               <label className="block text-xs font-bold text-gray-500 mb-1">Cantidad</label>
-               <input 
-                 type="number" 
-                 min="1" 
-                 className="w-full border border-gray-300 rounded-lg p-2 text-center" 
-                 value={cantidad} 
-                 onChange={e => setCantidad(e.target.value)} 
-               />
+              <label className="block text-xs font-bold text-gray-500 mb-1">Cantidad</label>
+              <input
+                type="number"
+                min="1"
+                className="w-full border border-gray-300 rounded-lg p-2 text-center"
+                value={cantidad}
+                onChange={e => setCantidad(e.target.value)}
+              />
             </div>
-            <button 
+            <button
               onClick={handleAddProduct}
               className="bg-emerald-500 text-white px-6 py-2 rounded-lg hover:bg-emerald-600 flex items-center gap-2 transition-colors"
             >
-              <Plus size={18}/> Agregar
+              <Plus size={18} /> Agregar
             </button>
           </div>
 
 
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
-                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+              <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                 <tr>
-                    <th className="p-3 text-left">Producto</th>
-                    <th className="p-3 text-center">Cant.</th>
-                    <th className="p-3 text-right">Precio Unit.</th>
-                    <th className="p-3 text-right">Subtotal</th>
-                    <th className="p-3 text-center">Acción</th>
+                  <th className="p-3 text-left">Producto</th>
+                  <th className="p-3 text-center">Cant.</th>
+                  <th className="p-3 text-right">Precio Unit.</th>
+                  <th className="p-3 text-right">Subtotal</th>
+                  <th className="p-3 text-center">Acción</th>
                 </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              </thead>
+              <tbody className="divide-y divide-gray-100">
                 {cart.length === 0 ? (
-                    <tr><td colSpan="5" className="text-center p-8 text-gray-400">El carrito está vacío</td></tr>
+                  <tr><td colSpan="5" className="text-center p-8 text-gray-400">El carrito está vacío</td></tr>
                 ) : (
-                    cart.map((item, index) => (
+                  cart.map((item, index) => (
                     <tr key={index} className="hover:bg-gray-50">
-                        <td className="p-3 font-medium text-gray-800">{item.nombre}</td>
-                        <td className="p-3 text-center">{item.cantidad}</td>
-                        <td className="p-3 text-right">${item.precio}</td>
-                        <td className="p-3 text-right font-bold text-emerald-600">${item.subtotal}</td>
-                        <td className="p-3 text-center">
+                      <td className="p-3 font-medium text-gray-800">{item.nombre}</td>
+                      <td className="p-3 text-center">{item.cantidad}</td>
+                      <td className="p-3 text-right">${item.precio}</td>
+                      <td className="p-3 text-right font-bold text-emerald-600">${item.subtotal}</td>
+                      <td className="p-3 text-center">
                         <button onClick={() => handleRemoveItem(index)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50">
-                            <Trash2 size={16}/>
+                          <Trash2 size={16} />
                         </button>
-                        </td>
+                      </td>
                     </tr>
-                    ))
+                  ))
                 )}
-                </tbody>
+              </tbody>
             </table>
           </div>
         </div>
 
         <div className="p-6 border-t bg-gray-50 flex justify-between items-center rounded-b-lg">
-           <div className="text-2xl font-bold text-gray-800">
-             Total: <span className="text-orange-500">${totalGeneral}</span>
-           </div>
-           <div className="flex gap-3">
-             <button onClick={onClose} className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white transition-colors">Cancelar</button>
-             <button 
-               onClick={handleSaveOrder} 
-               className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium flex items-center gap-2 shadow-lg shadow-orange-500/30"
-             >
-               <Save size={18}/> Guardar Pedido
-             </button>
-           </div>
+          <div className="text-2xl font-bold text-gray-800">
+            Total: <span className="text-orange-500">${totalGeneral}</span>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white transition-colors">Cancelar</button>
+            <button
+              onClick={handleSaveOrder}
+              className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium flex items-center gap-2 shadow-lg shadow-orange-500/30"
+            >
+              <Save size={18} /> Guardar Pedido
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -270,7 +274,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
 function NewReservaModal({ onClose, onSaveSuccess }) {
   const [clientes, setClientes] = useState([]);
   const [mesas, setMesas] = useState([]);
-  
+
   const [idCliente, setIdCliente] = useState('');
   const [idMesa, setIdMesa] = useState('');
   const [fechaHora, setFechaHora] = useState('');
@@ -318,6 +322,8 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
       }
 
       alert("Reserva creada exitosamente");
+      // Notificar al dashboard para que recargue sus datos
+      try { window.dispatchEvent(new Event('dashboard:refresh')); } catch (e) { }
       if (onSaveSuccess) onSaveSuccess();
       onClose();
     } catch (error) {
@@ -330,9 +336,9 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <Bookmark className="text-orange-500"/> Nueva Reserva
+            <Bookmark className="text-orange-500" /> Nueva Reserva
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={24}/></button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
         </div>
 
         <div className="p-6 space-y-4">
@@ -353,21 +359,21 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
               <option value="">Seleccione Mesa...</option>
               {mesas.map(m => (
                 <option key={m.id_mesa} value={m.id_mesa}>
-                   Mesa {m.numero} (Capacidad: {m.capacidad})
+                  Mesa {m.numero} (Capacidad: {m.capacidad})
                 </option>
               ))}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha y Hora</label>
-            <input 
-              type="datetime-local" 
+            <input
+              type="datetime-local"
               className="w-full border rounded-lg p-2"
               value={fechaHora}
               onChange={e => setFechaHora(e.target.value)}
             />
           </div>
-           <div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
             <select className="w-full border rounded-lg p-2" value={estado} onChange={e => setEstado(e.target.value)}>
               <option value="Pendiente">Pendiente</option>
@@ -399,9 +405,9 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
       try {
         const response = await fetch('http://localhost:5000/usuarios');
         if (response.ok) {
-            const data = await response.json();
+          const data = await response.json();
 
-            setUsuarios(data);
+          setUsuarios(data);
         }
       } catch (error) {
         console.error("Error cargando usuarios", error);
@@ -412,17 +418,17 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
 
   const handleSave = async () => {
     if (!idUsuario || !telefono || !direccion) {
-        return alert("Por favor complete todos los campos.");
+      return alert("Por favor complete todos los campos.");
     }
-    
+
     try {
       const response = await fetch('http://localhost:5000/clientes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            id_usuario: idUsuario, 
-            telefono, 
-            direccion 
+        body: JSON.stringify({
+          id_usuario: idUsuario,
+          telefono,
+          direccion
         })
       });
 
@@ -444,18 +450,18 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <Users className="text-orange-500"/> Nuevo Cliente
+            <Users className="text-orange-500" /> Nuevo Cliente
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={24}/></button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
         </div>
 
         <div className="p-6 space-y-4">
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-            <select 
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500" 
-              value={idUsuario} 
+            <select
+              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500"
+              value={idUsuario}
               onChange={e => setIdUsuario(e.target.value)}
             >
               <option value="">Seleccione un usuario...</option>
@@ -470,11 +476,11 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-            <input 
-              type="text" 
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500" 
-              value={telefono} 
-              onChange={e => setTelefono(e.target.value)} 
+            <input
+              type="text"
+              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500"
+              value={telefono}
+              onChange={e => setTelefono(e.target.value)}
               placeholder="Ej: 809-555-5555"
             />
           </div>
@@ -482,11 +488,11 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-            <input 
-              type="text" 
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500" 
-              value={direccion} 
-              onChange={e => setDireccion(e.target.value)} 
+            <input
+              type="text"
+              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500"
+              value={direccion}
+              onChange={e => setDireccion(e.target.value)}
               placeholder="Ej: Calle Principal #123"
             />
           </div>
@@ -531,7 +537,7 @@ function OrderDetailsModal({ pedido, onClose }) {
           </div>
           <button onClick={onClose} className="hover:bg-orange-600 p-1 rounded"><X size={20} /></button>
         </div>
-        
+
         <div className="p-6 overflow-y-auto">
           <div className="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
             <div>
@@ -572,17 +578,16 @@ function OrderDetailsModal({ pedido, onClose }) {
             </tbody>
           </table>
         </div>
-        
+
         <div className="p-4 bg-gray-50 border-t flex justify-between items-center shrink-0">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                pedido.estado === 'Completado' ? 'bg-green-100 text-green-700' : 
-                pedido.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${pedido.estado === 'Completado' ? 'bg-green-100 text-green-700' :
+            pedido.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
             }`}>
-                {pedido.estado}
-            </span>
-            <div className="text-xl font-bold text-gray-800">
-                Total: <span className="text-orange-500">${pedido.total}</span>
-            </div>
+            {pedido.estado}
+          </span>
+          <div className="text-xl font-bold text-gray-800">
+            Total: <span className="text-orange-500">${pedido.total}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -680,6 +685,8 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
       }
       setShowModal(false);
       fetchItems();
+      // Si se guardó un pedido, notificar al dashboard para recargar datos
+      try { if (endpoint === 'pedidos') window.dispatchEvent(new Event('dashboard:refresh')); } catch (e) { }
     } catch (error) {
       alert(`Error: ${error.message}`);
     }
@@ -698,6 +705,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
       if (!response.ok && response.status !== 204) throw new Error('Error al eliminar');
       setShowDeleteModal(false);
       fetchItems();
+      try { if (endpoint === 'pedidos') window.dispatchEvent(new Event('dashboard:refresh')); } catch (e) { }
     } catch (error) {
       alert(`Error: ${error.message}`);
     }
@@ -744,21 +752,21 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {isLoading ? <tr><td colSpan={fields.length + 2} className="text-center py-12 text-gray-500">Cargando...</td></tr> : 
-                    filteredItems.length > 0 ? filteredItems.map((item) => {
+                    {isLoading ? <tr><td colSpan={fields.length + 2} className="text-center py-12 text-gray-500">Cargando...</td></tr> :
+                      filteredItems.length > 0 ? filteredItems.map((item) => {
                         const idValue = getIdField(item);
                         return (
                           <tr key={idValue} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{idValue}</td>
                             {fields.map(field => {
-                                const val = item[field];
-                                const display = (field.includes('fecha') && val) ? new Date(val).toLocaleString() : val;
-                                return <td key={field} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{display}</td>
+                              const val = item[field];
+                              const display = (field.includes('fecha') && val) ? new Date(val).toLocaleString() : val;
+                              return <td key={field} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{display}</td>
                             })}
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               {onViewDetails && (
                                 <button onClick={() => onViewDetails(item)} className="text-emerald-600 hover:text-emerald-900 mr-4 inline-flex items-center gap-1">
-                                    <FileText className="w-4 h-4" /> Detalle
+                                  <FileText className="w-4 h-4" /> Detalle
                                 </button>
                               )}
                               <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-900 mr-4 inline-flex items-center gap-1"><Edit2 className="w-4 h-4" />Editar</button>
@@ -782,56 +790,56 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
               <h2 className="text-xl font-bold text-gray-800">{currentItem ? `Editar ${title}` : `Nuevo ${title}`}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
             </div>
-            
-            <div className="p-6 space-y-4">
-             {fields.map(field => (
-              <div key={field}>
-                <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{formatLabel(field)}</label>
 
-                {(title === "Usuarios" && field === "rol") || 
-                 (title === "Mesas" && field === "estado") || 
-                 (title === "Pedidos" && field === "estado") ||
-                 (title === "Reservas" && field === "estado") ||
-                 (title === "Productos" && (field === "categoria" || field === "estado")) ? (
-                  <select
-                    name={field}
-                    value={formData[field] || ''}
-                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                    required
-                  >
-                    <option value="" disabled>Seleccione...</option>
-                    {(title === "Usuarios" && field === "rol" ? rolesPermitidos : 
-                      title === "Mesas" ? estadosMesa : 
-                      title === "Reservas" ? estadosReserva :
-                      title === "Productos" && field === "categoria" ? categoriasProducto : 
-                      title === "Productos" && field === "estado" ? estadosProducto :       
-                      estadosPedido
-                    ).map(option => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                ) : field.includes('fecha') ? (
-                  <input
-                    type="datetime-local"
-                    name={field}
-                    value={formData[field] || ''}
-                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                    required
-                  />
-                ) : (
-                  <input
-                    type={field.includes('email') ? 'email' : field.includes('contraseña') ? 'password' : 'text'}
-                    name={field}
-                    value={formData[field] || ''}
-                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                    required={!currentItem || field !== 'contraseña'}
-                  />
-                )}
-              </div>
-            ))}
+            <div className="p-6 space-y-4">
+              {fields.map(field => (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{formatLabel(field)}</label>
+
+                  {(title === "Usuarios" && field === "rol") ||
+                    (title === "Mesas" && field === "estado") ||
+                    (title === "Pedidos" && field === "estado") ||
+                    (title === "Reservas" && field === "estado") ||
+                    (title === "Productos" && (field === "categoria" || field === "estado")) ? (
+                    <select
+                      name={field}
+                      value={formData[field] || ''}
+                      onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      required
+                    >
+                      <option value="" disabled>Seleccione...</option>
+                      {(title === "Usuarios" && field === "rol" ? rolesPermitidos :
+                        title === "Mesas" ? estadosMesa :
+                          title === "Reservas" ? estadosReserva :
+                            title === "Productos" && field === "categoria" ? categoriasProducto :
+                              title === "Productos" && field === "estado" ? estadosProducto :
+                                estadosPedido
+                      ).map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  ) : field.includes('fecha') ? (
+                    <input
+                      type="datetime-local"
+                      name={field}
+                      value={formData[field] || ''}
+                      onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      required
+                    />
+                  ) : (
+                    <input
+                      type={field.includes('email') ? 'email' : field.includes('contraseña') ? 'password' : 'text'}
+                      name={field}
+                      value={formData[field] || ''}
+                      onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      required={!currentItem || field !== 'contraseña'}
+                    />
+                  )}
+                </div>
+              ))}
 
               {title === "Usuarios" && (
                 <div>
@@ -890,36 +898,36 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
 
 
 function ProductCRUDModal({ onClose }) {
-  return <CRUDModal title="Productos" icon={Package} endpoint="productos" onClose={onClose} fields={['nombre', 'categoria', 'precio', 'stock','estado']} />;
+  return <CRUDModal title="Productos" icon={Package} endpoint="productos" onClose={onClose} fields={['nombre', 'categoria', 'precio', 'stock', 'estado']} />;
 }
 
 function OrderCRUDModal({ onClose }) {
-    const [selectedOrder, setSelectedOrder] = useState(null);
-    const [isCreating, setIsCreating] = useState(false);
-  
-    if (isCreating) {
-        return (
-            <NewOrderModal 
-                onClose={() => setIsCreating(false)} 
-                onSaveSuccess={() => setIsCreating(false)} 
-            />
-        );
-    }
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
 
+  if (isCreating) {
     return (
-      <>
-        <CRUDModal 
-          title="Pedidos" 
-          icon={FileText} 
-          endpoint="pedidos" 
-          onClose={onClose} 
-          fields={['nombre_cliente', 'nombre_empleado', 'fecha_hora', 'total', 'estado']}
-          onViewDetails={(item) => setSelectedOrder(item)}
-          customAction={() => setIsCreating(true)}
-        />
-        {selectedOrder && <OrderDetailsModal pedido={selectedOrder} onClose={() => setSelectedOrder(null)} />}
-      </>
+      <NewOrderModal
+        onClose={() => setIsCreating(false)}
+        onSaveSuccess={() => setIsCreating(false)}
+      />
     );
+  }
+
+  return (
+    <>
+      <CRUDModal
+        title="Pedidos"
+        icon={FileText}
+        endpoint="pedidos"
+        onClose={onClose}
+        fields={['nombre_cliente', 'nombre_empleado', 'fecha_hora', 'total', 'estado']}
+        onViewDetails={(item) => setSelectedOrder(item)}
+        customAction={() => setIsCreating(true)}
+      />
+      {selectedOrder && <OrderDetailsModal pedido={selectedOrder} onClose={() => setSelectedOrder(null)} />}
+    </>
+  );
 }
 
 function ReservaCRUDModal({ onClose }) {
@@ -927,20 +935,20 @@ function ReservaCRUDModal({ onClose }) {
 
   if (isCreating) {
     return (
-      <NewReservaModal 
-        onClose={() => setIsCreating(false)} 
-        onSaveSuccess={() => setIsCreating(false)} 
+      <NewReservaModal
+        onClose={() => setIsCreating(false)}
+        onSaveSuccess={() => setIsCreating(false)}
       />
     );
   }
 
   return (
-    <CRUDModal 
-      title="Reservas" 
-      icon={Bookmark} 
-      endpoint="reservas" 
-      onClose={onClose} 
-      fields={['nombre_cliente', 'numero_mesa', 'fecha_hora', 'estado']} 
+    <CRUDModal
+      title="Reservas"
+      icon={Bookmark}
+      endpoint="reservas"
+      onClose={onClose}
+      fields={['nombre_cliente', 'numero_mesa', 'fecha_hora', 'estado']}
       customAction={() => setIsCreating(true)}
     />
   );
@@ -952,20 +960,20 @@ function ClienteCRUDModal({ onClose }) {
 
   if (isCreating) {
     return (
-      <NewClienteModal 
-        onClose={() => setIsCreating(false)} 
-        onSaveSuccess={() => setIsCreating(false)} 
+      <NewClienteModal
+        onClose={() => setIsCreating(false)}
+        onSaveSuccess={() => setIsCreating(false)}
       />
     );
   }
 
   return (
-    <CRUDModal 
-      title="Clientes" 
-      icon={Users} 
-      endpoint="clientes" 
-      onClose={onClose} 
-      fields={['nombre_usuario', 'email_usuario', 'telefono', 'direccion']} 
+    <CRUDModal
+      title="Clientes"
+      icon={Users}
+      endpoint="clientes"
+      onClose={onClose}
+      fields={['nombre_usuario', 'email_usuario', 'telefono', 'direccion']}
       customAction={() => setIsCreating(true)}
     />
   );
@@ -991,15 +999,15 @@ function EmpleadoCRUDModal({ onClose }) {
 
 function App() {
   const { obtenerPrediccionSemanal, entrenarModelo, loading: aiLoading } = usePredictions();
-  const [rawAiData, setRawAiData] = useState([]); 
-  const [aiFilter, setAiFilter] = useState('hours'); 
+  const [rawAiData, setRawAiData] = useState([]);
+  const [aiFilter, setAiFilter] = useState('hours');
   const [aiError, setAiError] = useState(null);
   const [modelNeedsTraining, setModelNeedsTraining] = useState(false);
-  const RESTAURANTE_ID = 1; 
+  const RESTAURANTE_ID = 1;
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [usuario] = useState({ nombre: 'Admin' });
-  
+
   const [showProductCRUD, setShowProductCRUD] = useState(false);
   const [showOrderCRUD, setShowOrderCRUD] = useState(false);
   const [showReservaCRUD, setShowReservaCRUD] = useState(false);
@@ -1008,6 +1016,21 @@ function App() {
   const [showMesaCRUD, setShowMesaCRUD] = useState(false);
   const [showUsuarioCRUD, setShowUsuarioCRUD] = useState(false);
   const [showEmpleadoCRUD, setShowEmpleadoCRUD] = useState(false);
+
+  // Estados para datos reales del dashboard
+  const [estadisticas, setEstadisticas] = useState({
+    pedidosDelDia: 0,
+    ingresosHoy: 0,
+    clientesActivos: 0,
+    reservasProximas: 0
+  });
+  const [dailySalesData, setDailySalesData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [proximasReservas, setProximasReservas] = useState([]);
+  const [ultimosMovimientos, setUltimosMovimientos] = useState([]);
+  const [productosMasVendidos, setProductosMasVendidos] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [mesasEnLimpieza, setMesasEnLimpieza] = useState([]);
 
   const loadPredictions = useCallback(async () => {
     try {
@@ -1033,14 +1056,14 @@ function App() {
     if (!rawAiData || rawAiData.length === 0) return [];
     if (aiFilter === 'hours') {
       return rawAiData.slice(0, 24).map(p => ({ label: `${String(p.hora).padStart(2, '0')}:00`, value: Math.round(Number(p.demanda_predicha)) }));
-    } 
+    }
     if (aiFilter === 'days') {
       const daysMap = {};
       rawAiData.forEach(p => {
         const date = new Date(p.fecha);
         const userTimezoneOffset = date.getTimezoneOffset() * 60000;
         const localDate = new Date(date.getTime() + userTimezoneOffset);
-        const key = `${localDate.toLocaleDateString('es-ES', { weekday: 'short' })} ${localDate.getDate()}`; 
+        const key = `${localDate.toLocaleDateString('es-ES', { weekday: 'short' })} ${localDate.getDate()}`;
         if (!daysMap[key]) daysMap[key] = 0;
         daysMap[key] += Number(p.demanda_predicha);
       });
@@ -1048,26 +1071,26 @@ function App() {
     }
     if (aiFilter === 'monthly') {
       const monthlyData = [];
-      const currentData = rawAiData.slice(0, 168); 
+      const currentData = rawAiData.slice(0, 168);
       const dailyTotals = {};
       currentData.forEach(p => {
-         const d = new Date(p.fecha);
-         const userTimezoneOffset = d.getTimezoneOffset() * 60000;
-         const localDate = new Date(d.getTime() + userTimezoneOffset);
-         const day = localDate.getDay();
-         if (!dailyTotals[day]) dailyTotals[day] = 0;
-         dailyTotals[day] += Number(p.demanda_predicha);
+        const d = new Date(p.fecha);
+        const userTimezoneOffset = d.getTimezoneOffset() * 60000;
+        const localDate = new Date(d.getTime() + userTimezoneOffset);
+        const day = localDate.getDay();
+        if (!dailyTotals[day]) dailyTotals[day] = 0;
+        dailyTotals[day] += Number(p.demanda_predicha);
       });
       const startDate = new Date();
       for (let i = 0; i < 30; i++) {
-          const date = new Date(startDate);
-          date.setDate(date.getDate() + i);
-          const { season, type } = getSeasonAndType(date);
-          let val = dailyTotals[date.getDay()] || 0;
-          if (type === 'Alta') val *= 1.2;
-          if (type === 'Baja') val *= 0.9;
-          val = Math.round(val * (0.9 + Math.random() * 0.2));
-          monthlyData.push({ label: `${date.getDate()}/${date.getMonth()+1}`, value: val, season, type });
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        const { season, type } = getSeasonAndType(date);
+        let val = dailyTotals[date.getDay()] || 0;
+        if (type === 'Alta') val *= 1.2;
+        if (type === 'Baja') val *= 0.9;
+        val = Math.round(val * (0.9 + Math.random() * 0.2));
+        monthlyData.push({ label: `${date.getDate()}/${date.getMonth() + 1}`, value: val, season, type });
       }
       return monthlyData;
     }
@@ -1101,12 +1124,89 @@ function App() {
 
   const handleLogout = () => { window.location.href = '/'; };
 
+  // Función para cargar datos reales del dashboard
+  const cargarDatosDashboard = useCallback(async () => {
+    try {
+      // Cargar estadísticas principales
+      const resEstadisticas = await fetch('http://localhost:5000/dashboard/estadisticas');
+      if (resEstadisticas.ok) {
+        setEstadisticas(await resEstadisticas.json());
+      }
 
-  const dailySalesData = [
+      // Cargar ventas diarias
+      const resVentas = await fetch('http://localhost:5000/dashboard/ventas-diarias');
+      if (resVentas.ok) {
+        setDailySalesData(await resVentas.json());
+      }
+
+      // Cargar categorías más vendidas
+      const resCategorias = await fetch('http://localhost:5000/dashboard/categorias-mas-vendidas');
+      if (resCategorias.ok) {
+        setCategoryData(await resCategorias.json());
+      }
+
+      // Cargar próximas reservas
+      const resReservas = await fetch('http://localhost:5000/dashboard/proximas-reservas');
+      if (resReservas.ok) {
+        setProximasReservas(await resReservas.json());
+      }
+
+      // Cargar productos más vendidos
+      const resProductos = await fetch('http://localhost:5000/dashboard/productos-mas-vendidos');
+      if (resProductos.ok) {
+        setProductosMasVendidos(await resProductos.json());
+      }
+
+      // Cargar todos los productos y mesas para generar alertas
+      try {
+        const [resAllProductos, resMesas] = await Promise.all([
+          fetch('http://localhost:5000/productos'),
+          fetch('http://localhost:5000/mesas')
+        ]);
+        if (resAllProductos.ok) {
+          const allProds = await resAllProductos.json();
+          // Productos con stock bajo (<=5)
+          setLowStockProducts(allProds.filter(p => (parseInt(p.stock) || 0) > 0 && (parseInt(p.stock) || 0) <= 5));
+        }
+        if (resMesas.ok) {
+          const allMesas = await resMesas.json();
+          // Mesas en limpieza (estado incluye 'Limpieza' o 'Limpieza pendiente')
+          setMesasEnLimpieza(allMesas.filter(m => m.estado && String(m.estado).toLowerCase().includes('limpieza')));
+        }
+      } catch (e) {
+        // ignore alert fetch errors
+      }
+
+      // Cargar últimos movimientos
+      const resMovimientos = await fetch('http://localhost:5000/dashboard/ultimos-movimientos');
+      if (resMovimientos.ok) {
+        setUltimosMovimientos(await resMovimientos.json());
+      }
+    } catch (error) {
+      console.error('Error cargando datos del dashboard:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarDatosDashboard();
+    // Recargar datos cada 30 segundos
+    const interval = setInterval(cargarDatosDashboard, 30000);
+    return () => clearInterval(interval);
+  }, [cargarDatosDashboard]);
+
+  // Escuchar eventos globales para recargar el dashboard (por ejemplo: nueva reserva)
+  useEffect(() => {
+    const handler = () => cargarDatosDashboard();
+    window.addEventListener('dashboard:refresh', handler);
+    return () => window.removeEventListener('dashboard:refresh', handler);
+  }, [cargarDatosDashboard]);
+
+
+  const defaultDailySalesData = [
     { day: 'L', sales: 220 }, { day: 'M', sales: 280 }, { day: 'M', sales: 250 },
     { day: 'J', sales: 240 }, { day: 'S', sales: 270 }, { day: 'S', sales: 310 }
   ];
-  const categoryData = [
+  const defaultCategoryData = [
     { name: 'Hamburguesas', value: 35, color: '#EF4444' }, { name: 'Pizza', value: 25, color: '#F97316' },
     { name: 'Sushi', value: 20, color: '#10B981' }, { name: 'Ensaladas', value: 20, color: '#14B8A6' }
   ];
@@ -1143,55 +1243,100 @@ function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center gap-3 mb-2"><FileText size={24} /><div className="text-sm opacity-90">Pedidos del día</div></div>
-              <div className="text-4xl font-bold">45</div>
+              <div className="text-4xl font-bold">{estadisticas.pedidosDelDia}</div>
             </div>
             <div className="bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center gap-3 mb-2"><DollarSign size={24} /><div className="text-sm opacity-90">Ingresos hoy</div></div>
-              <div className="text-4xl font-bold">$12,350</div>
+              <div className="text-4xl font-bold">${estadisticas.ingresosHoy.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
             </div>
             <div className="bg-gradient-to-br from-teal-400 to-teal-500 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center gap-3 mb-2"><Users size={24} /><div className="text-sm opacity-90">Clientes activos</div></div>
-              <div className="text-4xl font-bold">320</div>
+              <div className="text-4xl font-bold">{estadisticas.clientesActivos}</div>
             </div>
             <div className="bg-gradient-to-br from-red-400 to-red-500 rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center gap-3 mb-2"><CreditCard size={24} /><div className="text-sm opacity-90">Reservas próximas</div></div>
-              <div className="text-4xl font-bold">8</div>
+              <div className="text-4xl font-bold">{estadisticas.reservasProximas}</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Alertas / Notificaciones</h3>
+            <div className="space-y-3">
+              {mesasEnLimpieza.length > 0 && (
+                <div className="p-3 rounded border border-yellow-100 bg-yellow-50">
+                  <div className="text-sm font-semibold text-yellow-800 mb-2">Mesas en limpieza</div>
+                  <ul className="text-sm text-yellow-700">
+                    {mesasEnLimpieza.map((m, i) => (
+                      <li key={i}>Mesa {m.numero} - {m.estado}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {lowStockProducts.length > 0 && (
+                <div className="p-3 rounded border border-red-100 bg-red-50">
+                  <div className="text-sm font-semibold text-red-800 mb-2">Productos con stock bajo</div>
+                  <ul className="text-sm text-red-700">
+                    {lowStockProducts.map((p, i) => (
+                      <li key={i}>{p.nombre} — {p.stock} unidades restantes</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {mesasEnLimpieza.length === 0 && lowStockProducts.length === 0 && (
+                <div className="text-sm text-gray-500">No hay alertas en este momento</div>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            
+
 
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold mb-4 text-gray-800">Ventas diarias</h3>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={dailySalesData} margin={{ top: 20 }}>
+                <BarChart data={dailySalesData.length > 0 ? dailySalesData : defaultDailySalesData} margin={{ top: 20 }}>
                   <Bar dataKey="sales" fill="#10B981" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: '#666', fontSize: 12 }} />
                   <XAxis dataKey="day" axisLine={false} tickLine={false} />
                   <Tooltip />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            
+
 
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold mb-4 text-gray-800">Categorías más vendidas</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" label={({name, value}) => `${value}`}>
-                    {categoryData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="flex items-center justify-center" style={{ width: '100%' }}>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
+                    <Pie
+                      data={categoryData.length > 0 ? categoryData : defaultCategoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                      labelLine={true}
+                      label={{ position: 'outside', fill: '#0f172a', fontSize: 12 }}
+                    >
+                      {(categoryData.length > 0 ? categoryData : defaultCategoryData).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
 
             <div className="bg-white rounded-xl p-6 shadow-sm relative overflow-hidden min-h-[420px]">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                 <div className="flex items-center gap-2">
-                    <BrainCircuit className="text-emerald-500" size={20} />
-                    <h3 className="text-lg font-semibold text-gray-800">{aiInsights ? aiInsights.title : 'Predicción de Demanda'}</h3>
+                  <BrainCircuit className="text-emerald-500" size={20} />
+                  <h3 className="text-lg font-semibold text-gray-800">{aiInsights ? aiInsights.title : 'Predicción de Demanda'}</h3>
                 </div>
                 {!modelNeedsTraining && !aiError && rawAiData.length > 0 && (
                   <div className="flex bg-gray-100 p-1 rounded-lg">
@@ -1205,34 +1350,34 @@ function App() {
                 {aiLoading && <div className="absolute inset-0 bg-white/80 z-10 flex items-center justify-center"><div className="flex items-center gap-2 text-sm text-emerald-600 font-medium"><RefreshCw className="animate-spin" size={18} /> Calculando...</div></div>}
                 {modelNeedsTraining ? (
                   <div className="h-full flex flex-col items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                      <p className="text-gray-500 text-sm mb-3">El modelo necesita entrenamiento</p>
-                      <button onClick={handleTrainModel} disabled={aiLoading} className="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 shadow-sm"><BrainCircuit size={16} />{aiLoading ? 'Entrenando...' : 'Entrenar Modelo'}</button>
+                    <p className="text-gray-500 text-sm mb-3">El modelo necesita entrenamiento</p>
+                    <button onClick={handleTrainModel} disabled={aiLoading} className="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 shadow-sm"><BrainCircuit size={16} />{aiLoading ? 'Entrenando...' : 'Entrenar Modelo'}</button>
                   </div>
                 ) : aiError ? <div className="h-full flex flex-col items-center justify-center text-red-400 text-sm bg-red-50 rounded-lg"><AlertTriangle size={24} className="mb-2" />{aiError}</div> : (
                   <ResponsiveContainer width="100%" height="100%">
-                      {aiFilter === 'days' ? (
-                        <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                          <XAxis dataKey="label" fontSize={10} axisLine={false} tickLine={false} />
-                          <YAxis fontSize={10} axisLine={false} tickLine={false} />
-                          <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                          <Bar dataKey="value" fill="#10B981" radius={[4, 4, 0, 0]} name="Pedidos esperados" label={{ position: 'top', fill: '#374151', fontSize: 10 }} />
-                        </BarChart>
-                      ) : (
-                        <AreaChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-                          <defs>
-                              <linearGradient id="demandGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                              </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                          <XAxis dataKey="label" fontSize={10} axisLine={false} tickLine={false} interval={aiFilter === 'monthly' ? 6 : 'preserveStartEnd'} />
-                          <YAxis fontSize={10} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value, name, props) => aiFilter === 'monthly' ? [`${value} pedidos`, `${props.payload.type} (${props.payload.season})`] : [`${value} pedidos`, 'Demanda']} />
-                          <Area type="monotone" dataKey="value" stroke="#10B981" strokeWidth={3} fill="url(#demandGradient)" animationDuration={1500} label={aiFilter !== 'monthly' ? { position: 'top', fill: '#10B981', fontSize: 10 } : false} />
-                        </AreaChart>
-                      )}
+                    {aiFilter === 'days' ? (
+                      <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                        <XAxis dataKey="label" fontSize={10} axisLine={false} tickLine={false} />
+                        <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                        <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                        <Bar dataKey="value" fill="#10B981" radius={[4, 4, 0, 0]} name="Pedidos esperados" label={{ position: 'top', fill: '#374151', fontSize: 10 }} />
+                      </BarChart>
+                    ) : (
+                      <AreaChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="demandGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                        <XAxis dataKey="label" fontSize={10} axisLine={false} tickLine={false} interval={aiFilter === 'monthly' ? 6 : 'preserveStartEnd'} />
+                        <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value, name, props) => aiFilter === 'monthly' ? [`${value} pedidos`, `${props.payload.type} (${props.payload.season})`] : [`${value} pedidos`, 'Demanda']} />
+                        <Area type="monotone" dataKey="value" stroke="#10B981" strokeWidth={3} fill="url(#demandGradient)" animationDuration={1500} label={aiFilter !== 'monthly' ? { position: 'top', fill: '#10B981', fontSize: 10 } : false} />
+                      </AreaChart>
+                    )}
                   </ResponsiveContainer>
                 )}
               </div>
@@ -1249,59 +1394,34 @@ function App() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">Alertas / Notificaciones</h3>
-              <div className="space-y-3">
-                {[
-                  { type: 'warning', message: '2 Mesas pendientes de limpiar' },
-                  { type: 'warning', message: 'Papas fritas: 5 unidades restantes' },
-                  { type: 'danger', message: '12 Pagos pendientes de confirmación' }
-                ].map((alert, idx) => (
-                  <div key={idx} className={`flex items-center gap-3 p-3 rounded-lg ${alert.type === 'danger' ? 'bg-red-50' : 'bg-yellow-50'}`}>
-                    <AlertTriangle className={alert.type === 'danger' ? 'text-red-500' : 'text-yellow-600'} size={20} />
-                    <span className="text-sm text-gray-700">{alert.message}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6">
-                <h4 className="text-md font-semibold mb-3 text-gray-800">Historial de ingresos mensuales</h4>
-                <div className="border border-emerald-200 rounded-lg p-4 bg-emerald-50">
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
-                    <span className="text-sm font-medium">$4,380 Total de pagos completados</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+            {/* Removed: Alertas / Historial (replaced by expanded Próximas reservas + real data) */}
 
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Próximas reservas</h3>
-                <button className="text-teal-500 text-sm font-medium hover:text-teal-600">Ver más</button>
               </div>
               <div className="space-y-3">
-                {[
-                  { name: 'Manuel García', table: 'Mesa 5', date: '08/02', time: '07:06' },
-                  { name: 'Valeria Ramos', table: 'Mesa 8', date: '08/02', time: '15:30' },
-                  { name: 'Felipe Santos', table: 'Mesa 3', date: '08/02', time: '19:00' }
-                ].map((res, idx) => (
-                  <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                    <div>
-                      <div className="font-medium text-gray-800 text-sm">{res.name}</div>
-                      <div className="text-xs text-gray-500">{res.table}</div>
+                {proximasReservas.length > 0 ? (
+                  proximasReservas.map((res, idx) => (
+                    <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                      <div>
+                        <div className="font-medium text-gray-800 text-sm">{res.nombre_cliente}</div>
+                        <div className="text-xs text-gray-500">Mesa {res.numero_mesa}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-700">{new Date(res.fecha_hora).toLocaleDateString()}</div>
+                        <div className="text-xs text-gray-500">{new Date(res.fecha_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-700">{res.date}</div>
-                      <div className="text-xs text-gray-500">{res.time}</div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500 text-sm">No hay reservas próximas</div>
+                )}
               </div>
               <div className="mt-6 pt-4 border-t">
-                <h4 className="text-md font-semibold mb-2 text-gray-800">Total mensual</h4>
-                <div className="text-3xl font-bold text-emerald-500">$43,890</div>
-                <div className="text-sm text-gray-600">Pagos completados</div>
+                <h4 className="text-md font-semibold mb-2 text-gray-800">Total de reservas próximas</h4>
+                <div className="text-3xl font-bold text-emerald-500">{estadisticas.reservasProximas}</div>
+                <div className="text-sm text-gray-600">Próximos 7 días</div>
               </div>
             </div>
 
@@ -1311,36 +1431,34 @@ function App() {
               <div className="mb-4">
                 <div className="text-sm text-gray-600 mb-3">Últimos pedidos</div>
                 <div className="space-y-3">
-                  {[
-                    { name: 'Manuel García', date: '15/02/2044', status: 'Confirmada' },
-                    { name: 'Valeria Ramos', date: '16/02/2044', status: 'Pendiente' },
-                    { name: 'Felipe Santos', date: '18/02/2044', status: 'Completada' }
-                  ].map((order, idx) => (
-                    <div key={idx} className="flex items-center justify-between hover:bg-gray-50 p-2 rounded cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Users size={16} className="text-gray-400" />
-                        <span className="font-medium text-sm text-gray-800">{order.name}</span>
+                  {ultimosMovimientos.length > 0 ? (
+                    ultimosMovimientos.map((order, idx) => (
+                      <div key={idx} className="flex items-center justify-between hover:bg-gray-50 p-2 rounded cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Users size={16} className="text-gray-400" />
+                          <span className="font-medium text-sm text-gray-800">{order.nombre_cliente}</span>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400" />
                       </div>
-                      <ChevronRight size={16} className="text-gray-400" />
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center py-3 text-gray-500 text-sm">No hay movimientos recientes</div>
+                  )}
                 </div>
               </div>
               <div className="pt-4 border-t">
                 <h4 className="text-md font-semibold mb-3 text-gray-800">Productos más vendidos</h4>
                 <div className="space-y-2">
-                  {[
-                    { name: 'Hamburguesa', price: '$5.500' },
-                    { name: 'Enchiladas', price: '$1.250' },
-                    { name: 'Sushi', price: '$980' },
-                    { name: 'Pizza', price: '$650' },
-                    { name: 'Ensalada', price: '$250' }
-                  ].map((product, idx) => (
-                    <div key={idx} className="flex justify-between items-center py-2">
-                      <span className="text-sm text-gray-700">{product.name}</span>
-                      <span className="font-semibold text-sm text-gray-900">{product.price}</span>
-                    </div>
-                  ))}
+                  {productosMasVendidos.length > 0 ? (
+                    productosMasVendidos.map((prod, idx) => (
+                      <div key={idx} className="flex justify-between items-center py-2">
+                        <span className="text-sm text-gray-700">{prod.nombre}</span>
+                        <span className="font-semibold text-sm text-gray-900">{prod.cantidad}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-3 text-gray-500 text-sm">Sin datos</div>
+                  )}
                 </div>
               </div>
             </div>
