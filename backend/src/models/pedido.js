@@ -129,10 +129,28 @@ class Pedido {
         return data;
     }
 
-    static async eliminar(id) {
-        const { error } = await supabase.from('pedidos').delete().eq('id_pedido', id);
+static async eliminar(id) {
+        // PASO 1: Eliminar primero los detalles (productos) de ese pedido
+        const { error: errorDetalles } = await supabase
+            .from('detalle_pedido')
+            .delete()
+            .eq('id_pedido', id);
+
+        if (errorDetalles) {
+            console.error("Error al eliminar detalles:", errorDetalles);
+            throw errorDetalles;
+        }
+
+        // PASO 2: Ahora que está "vacío", eliminamos el pedido principal
+        const { data, error } = await supabase
+            .from('pedidos')
+            .delete()
+            .eq('id_pedido', id)
+            .select(); // Usamos select para confirmar que se borró
+
         if (error) throw error;
-        return true;
+        
+        return data;
     }
 }
 

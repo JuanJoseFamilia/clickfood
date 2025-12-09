@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Usamos el hook de navegación
+import { useNavigate } from 'react-router-dom'; 
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -8,8 +8,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
-  
-  const navigate = useNavigate(); // Inicializar hook
+   
+  const navigate = useNavigate(); 
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
@@ -33,17 +33,28 @@ export default function LoginPage() {
 
       if (res.ok) {
         setMensaje("¡Login exitoso! Redirigiendo...");
-    
+        
         // Guardar usuario en localStorage
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
         
-        // Redirección basada en el rol
+        console.log("DATOS RECIBIDOS DEL BACKEND:", data.usuario);
         setTimeout(() => {
           const rol = data.usuario.rol || ''; 
+          const puesto = data.usuario.puesto ? data.usuario.puesto: '';
 
           if (rol === 'cliente') {
-            navigate('/cliente/home'); // <--- AHORA VA AL HOME DE CLIENTE
-          } else if (rol === 'administrador' || rol === 'admin' || rol === 'empleado') {
+            navigate('/cliente/home'); 
+          } 
+          else if (rol === 'empleado') {
+             if (puesto === 'Mesero') {
+                 navigate('/mesero');
+             } else if (puesto === 'Chef') {
+                 navigate('/cocina');
+             } else {
+                 navigate('/dasboard'); 
+             }
+          }
+          else if (rol === 'administrador' || rol === 'admin') {
             navigate('/dasboard');
           } else {
             navigate('/dasboard');

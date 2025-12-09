@@ -20,19 +20,18 @@ export const obtenerEmpleadoPorId = async (req, res) => {
 };
 
 export const crearEmpleado = async (req, res) => {
-  try {
-    const { nombre, email, contraseña, puesto, salario } = req.body;
+ try {
 
-    if (!nombre || !email || !contraseña || !puesto || !salario) {
+  const { id_usuario, puesto, salario } = req.body;
+
+    if (!id_usuario || !puesto || !salario) {
       return res.status(400).json({
-        message: 'Complete todos los campos: Nombre, Email, Contraseña, Puesto y Salario.'
+        message: 'Faltan datos. Se requiere seleccionar un Usuario, indicar Puesto y Salario.'
       });
     }
 
     const nuevoEmpleado = await Empleado.crearConUsuario({
-      nombre,
-      email,
-      contraseña,
+      id_usuario,
       puesto,
       salario
     });
@@ -41,7 +40,10 @@ export const crearEmpleado = async (req, res) => {
 
   } catch (error) {
     console.error("Error en crearEmpleado:", error);
-    res.status(500).json({ message: 'Error al crear el empleado', error: error.message });
+    if (error.message.includes("ya es un empleado")) {
+        return res.status(400).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Error al registrar el empleado', error: error.message });
   }
 };
 

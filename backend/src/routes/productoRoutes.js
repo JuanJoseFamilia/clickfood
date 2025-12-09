@@ -11,7 +11,6 @@ import {
 
 const router = Router();
 
-// fix - Sin /productos (el prefijo ya está en index.js)
 router.get('/', obtenerProductos);  // GET /productos     
 router.post('/', crearProducto);        // POST /productos    
 router.get('/:id', obtenerProductoPorId);    // GET /productos/:id

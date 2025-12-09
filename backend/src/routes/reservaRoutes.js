@@ -1,6 +1,5 @@
 // backend/src/routes/reservaRoutes.js
 import express from 'express';
-// Importamos las funciones del controlador que ya contienen la lógica del JOIN y mapeo
 import { 
     obtenerReservas, 
     obtenerReservaPorId, 
@@ -11,9 +10,7 @@ import {
 
 const router = express.Router();
 
-// --- RUTAS CONECTADAS AL CONTROLADOR ---
-
-// GET /reservas - Usará obtenerReservas del controlador (que incluye el nombre_cliente)
+// GET /reservas
 router.get('/', obtenerReservas);
 
 // GET /reservas/:id

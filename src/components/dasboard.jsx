@@ -32,14 +32,20 @@ function getSeasonAndType(date) {
   return { season, icon, type };
 }
 
+// --- MODALES PERSONALIZADOS ---
 
 function NewOrderModal({ onClose, onSaveSuccess }) {
   const [clientes, setClientes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
   const [productos, setProductos] = useState([]);
+  const [mesas, setMesas] = useState([]); 
 
+  // --- ESTADOS DE SELECCIÓN MANUAL ---
   const [idCliente, setIdCliente] = useState('');
-  const [idEmpleado, setIdEmpleado] = useState('');
+  const [idEmpleado, setIdEmpleado] = useState(''); 
+  const [selectedMesaNumero, setSelectedMesaNumero] = useState('');
+  
+  // Visualmente mostramos "Pendiente"
   const [estado, setEstado] = useState('Pendiente');
 
   const [selectedProductoId, setSelectedProductoId] = useState('');
@@ -49,18 +55,23 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [resCli, resEmp, resProd] = await Promise.all([
+        const [resCli, resEmp, resProd, resMesas] = await Promise.all([
           fetch('http://localhost:5000/clientes'),
           fetch('http://localhost:5000/empleados'),
-          fetch('http://localhost:5000/productos')
+          fetch('http://localhost:5000/productos'),
+          fetch('http://localhost:5000/mesas')
         ]);
 
-        setClientes(await resCli.json());
-        setEmpleados(await resEmp.json());
-        const allProds = await resProd.json();
-        // Filtrar productos sin stock o inactivos para que no aparezcan al crear pedidos
-        const disponibles = allProds.filter(p => (parseInt(p.stock) || 0) > 0 && (!p.estado || String(p.estado).toLowerCase() !== 'inactivo'));
-        setProductos(disponibles);
+        if(resCli.ok) setClientes(await resCli.json());
+        if(resEmp.ok) setEmpleados(await resEmp.json());
+        if(resMesas.ok) setMesas(await resMesas.json());
+        
+        if(resProd.ok) {
+            const allProds = await resProd.json();
+            // Filtramos productos activos y con stock
+            const disponibles = allProds.filter(p => (parseInt(p.stock) || 0) > 0 && (!p.estado || String(p.estado).toLowerCase() !== 'inactivo'));
+            setProductos(disponibles);
+        }
       } catch (error) {
         console.error("Error cargando datos para pedido", error);
       }
@@ -70,21 +81,18 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
 
   const handleAddProduct = () => {
     if (!selectedProductoId || cantidad <= 0) return;
-
     const productoReal = productos.find(p => p.id_producto === parseInt(selectedProductoId));
     if (!productoReal) return;
-
     const subtotal = parseFloat(productoReal.precio) * parseInt(cantidad);
-
-    const newItem = {
+    
+    setCart([...cart, {
       id_producto: productoReal.id_producto,
       nombre: productoReal.nombre,
       precio: parseFloat(productoReal.precio),
       cantidad: parseInt(cantidad),
       subtotal: subtotal
-    };
-
-    setCart([...cart, newItem]);
+    }]);
+    
     setSelectedProductoId('');
     setCantidad(1);
   };
@@ -98,18 +106,36 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
   const totalGeneral = cart.reduce((acc, item) => acc + item.subtotal, 0);
 
   const handleSaveOrder = async () => {
-    if (!idCliente || !idEmpleado || cart.length === 0) {
-      alert("Por favor seleccione cliente, empleado y al menos un producto.");
+    // VALIDACIONES
+    if (!idCliente) {
+        alert("Por favor seleccione un Cliente.");
+        return;
+    }
+    if (!idEmpleado) {
+        alert("Por favor seleccione el Empleado que atiende.");
+        return;
+    }
+    if (!selectedMesaNumero) {
+        alert("Por favor seleccione una Mesa.");
+        return;
+    }
+    if (cart.length === 0) {
+      alert("Por favor agregue al menos un producto.");
       return;
     }
 
+
     const payload = {
-      id_cliente: idCliente,
-      id_empleado: idEmpleado,
-      estado: estado,
+      id_mesa: selectedMesaNumero, 
+      id_empleado: idEmpleado, 
+      id_cliente: idCliente,   
       total: totalGeneral,
-      fecha_hora: new Date().toISOString(),
-      items: cart
+      productos: cart.map(item => ({
+          id_producto: item.id_producto,
+          cantidad: item.cantidad,
+          precio: item.precio
+      })),
+      notas: "Pedido creado desde Web"
     };
 
     try {
@@ -121,7 +147,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
 
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.message || "Error al guardar");
+        throw new Error(err.message || err.error || "Error al guardar");
       }
 
       alert("Pedido creado exitosamente");
@@ -137,6 +163,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full flex flex-col max-h-[90vh]">
+        {/* HEADER */}
         <div className="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <Package className="text-orange-500" /> Nuevo Pedido
@@ -144,11 +171,13 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
           <button onClick={onClose}><X className="text-gray-400 hover:text-gray-600" /></button>
         </div>
 
+        {/* BODY */}
         <div className="p-6 overflow-y-auto flex-1">
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+            
+            {/*SELECTOR DE CLIENTE */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cliente <span className='text-red-500'>*</span></label>
               <select className="w-full border border-gray-300 rounded-lg p-2" value={idCliente} onChange={e => setIdCliente(e.target.value)}>
                 <option value="">Seleccione Cliente...</option>
                 {clientes.map(c => (
@@ -158,9 +187,15 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
                 ))}
               </select>
             </div>
+
+            {/* SELECTOR DE EMPLEADO*/}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Empleado</label>
-              <select className="w-full border border-gray-300 rounded-lg p-2" value={idEmpleado} onChange={e => setIdEmpleado(e.target.value)}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Empleado <span className='text-red-500'>*</span></label>
+              <select 
+                className="w-full border border-gray-300 rounded-lg p-2" 
+                value={idEmpleado} 
+                onChange={e => setIdEmpleado(e.target.value)}
+              >
                 <option value="">Seleccione Empleado...</option>
                 {empleados.map(e => (
                   <option key={e.id_empleado} value={e.id_empleado}>
@@ -169,18 +204,28 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
                 ))}
               </select>
             </div>
+
+            {/*SELECTOR DE MESA */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-              <select className="w-full border border-gray-300 rounded-lg p-2" value={estado} onChange={e => setEstado(e.target.value)}>
-                <option value="Pendiente">Pendiente</option>
-                <option value="En preparación">En preparación</option>
-                <option value="Completado">Completado</option>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mesa <span className='text-red-500'>*</span></label>
+              <select 
+                className="w-full border border-gray-300 rounded-lg p-2" 
+                value={selectedMesaNumero} 
+                onChange={e => setSelectedMesaNumero(e.target.value)}
+              >
+                <option value="">Seleccione Mesa...</option>
+                {mesas.map(m => (
+                  <option key={m.id_mesa} value={m.numero}>
+                    Mesa {m.numero} (Cap: {m.capacidad})
+                  </option>
+                ))}
               </select>
             </div>
+
           </div>
 
-
           <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2"><Plus size={16} /> Agregar Productos</h3>
+          
           <div className="flex flex-col md:flex-row gap-3 items-end mb-6 border-b pb-6">
             <div className="flex-1 w-full">
               <label className="block text-xs font-bold text-gray-500 mb-1">Producto</label>
@@ -214,7 +259,6 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
               <Plus size={18} /> Agregar
             </button>
           </div>
-
 
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
@@ -250,6 +294,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
           </div>
         </div>
 
+        {/* FOOTER */}
         <div className="p-6 border-t bg-gray-50 flex justify-between items-center rounded-b-lg">
           <div className="text-2xl font-bold text-gray-800">
             Total: <span className="text-orange-500">${totalGeneral}</span>
@@ -268,8 +313,6 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
     </div>
   );
 }
-
-
 
 function NewReservaModal({ onClose, onSaveSuccess }) {
   const [clientes, setClientes] = useState([]);
@@ -322,7 +365,6 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
       }
 
       alert("Reserva creada exitosamente");
-      // Notificar al dashboard para que recargue sus datos
       try { window.dispatchEvent(new Event('dashboard:refresh')); } catch (e) { }
       if (onSaveSuccess) onSaveSuccess();
       onClose();
@@ -392,13 +434,11 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
   );
 }
 
-
 function NewClienteModal({ onClose, onSaveSuccess }) {
   const [usuarios, setUsuarios] = useState([]);
   const [idUsuario, setIdUsuario] = useState('');
   const [telefono, setTelefono] = useState('');
   const [direccion, setDireccion] = useState('');
-
 
   useEffect(() => {
     const loadUsuarios = async () => {
@@ -406,7 +446,6 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
         const response = await fetch('http://localhost:5000/usuarios');
         if (response.ok) {
           const data = await response.json();
-
           setUsuarios(data);
         }
       } catch (error) {
@@ -456,7 +495,6 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
         </div>
 
         <div className="p-6 space-y-4">
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
             <select
@@ -472,8 +510,6 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
               ))}
             </select>
           </div>
-
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
             <input
@@ -484,8 +520,6 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
               placeholder="Ej: 809-555-5555"
             />
           </div>
-
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
             <input
@@ -501,6 +535,155 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
         <div className="flex gap-3 p-6 border-t bg-gray-50 rounded-b-lg">
           <button onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg hover:bg-white transition">Cancelar</button>
           <button onClick={handleSave} className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">Guardar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NewEmpleadoModal({ onClose, onSaveSuccess }) {
+  const [usuariosDisponibles, setUsuariosDisponibles] = useState([]);
+  const [idUsuario, setIdUsuario] = useState('');
+  const [puesto, setPuesto] = useState('');
+  const [salario, setSalario] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [resUsuarios, resEmpleados] = await Promise.all([
+          fetch('http://localhost:5000/usuarios'),
+          fetch('http://localhost:5000/empleados')
+        ]);
+
+        if (resUsuarios.ok && resEmpleados.ok) {
+          const todosLosUsuarios = await resUsuarios.json();
+          const empleadosExistentes = await resEmpleados.json();
+
+          const idsDeEmpleados = empleadosExistentes.map(emp => emp.id_usuario);
+
+          const disponibles = todosLosUsuarios.filter(u => 
+            u.rol === 'empleado' && !idsDeEmpleados.includes(u.id_usuario)
+          );
+
+          setUsuariosDisponibles(disponibles);
+        }
+      } catch (error) {
+        console.error("Error cargando datos", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const handleSave = async () => {
+    if (!idUsuario || !puesto || !salario) {
+      alert("Por favor complete todos los campos.");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/empleados', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_usuario: idUsuario,
+          puesto: puesto,
+          salario: salario
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Error al guardar");
+      }
+
+      alert("Empleado registrado exitosamente");
+      if (onSaveSuccess) onSaveSuccess();
+      onClose();
+    } catch (error) {
+      alert("Error: " + error.message);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className="p-6 border-b flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <Users className="text-orange-500" /> Nuevo Empleado
+          </h2>
+          <button onClick={onClose}><X size={24} className="text-gray-400 hover:text-gray-600" /></button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Seleccionar Usuario (Pendiente de registrar)
+            </label>
+            <select
+              className="w-full border rounded-lg p-2"
+              value={idUsuario}
+              onChange={e => setIdUsuario(e.target.value)}
+              disabled={loading}
+            >
+              <option value="">
+                {loading ? "Cargando..." : "-- Seleccione un usuario --"}
+              </option>
+              
+              {!loading && usuariosDisponibles.length === 0 ? (
+                 <option disabled>No hay usuarios disponibles (todos ya son empleados)</option>
+              ) : (
+                usuariosDisponibles.map(u => (
+                  <option key={u.id_usuario} value={u.id_usuario}>
+                    {u.nombre} ({u.email})
+                  </option>
+                ))
+              )}
+            </select>
+            {!loading && usuariosDisponibles.length === 0 && (
+                <p className="text-xs text-orange-500 mt-2">
+                    Todos los usuarios con rol 'empleado' ya están registrados. 
+                    Crea un nuevo usuario o cambia el rol de uno existente en "Gestión de Usuarios".
+                </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Puesto</label>
+            <input
+              type="text"
+              className="w-full border rounded-lg p-2"
+              placeholder="Ej: Chef, Mesero..."
+              value={puesto}
+              onChange={e => setPuesto(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Salario</label>
+            <input
+              type="number"
+              className="w-full border rounded-lg p-2"
+              placeholder="0.00"
+              value={salario}
+              onChange={e => setSalario(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 p-6 border-t bg-gray-50 rounded-b-lg">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg hover:bg-white">Cancelar</button>
+          <button 
+            onClick={handleSave} 
+            disabled={usuariosDisponibles.length === 0}
+            className={`flex-1 px-4 py-2 text-white rounded-lg transition ${usuariosDisponibles.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}
+          >
+            Guardar
+          </button>
         </div>
       </div>
     </div>
@@ -594,7 +777,7 @@ function OrderDetailsModal({ pedido, onClose }) {
   );
 }
 
-// --- CRUD GENERICO
+// --- CRUD GENERICO ---
 function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails, customAction }) {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -685,7 +868,6 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
       }
       setShowModal(false);
       fetchItems();
-      // Si se guardó un pedido, notificar al dashboard para recargar datos
       try { if (endpoint === 'pedidos') window.dispatchEvent(new Event('dashboard:refresh')); } catch (e) { }
     } catch (error) {
       alert(`Error: ${error.message}`);
@@ -896,6 +1078,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
   );
 }
 
+// --- CONFIGURACIÓN DE MODALES ESPECÍFICOS ---
 
 function ProductCRUDModal({ onClose }) {
   return <CRUDModal title="Productos" icon={Package} endpoint="productos" onClose={onClose} fields={['nombre', 'categoria', 'precio', 'stock', 'estado']} />;
@@ -954,7 +1137,6 @@ function ReservaCRUDModal({ onClose }) {
   );
 }
 
-
 function ClienteCRUDModal({ onClose }) {
   const [isCreating, setIsCreating] = useState(false);
 
@@ -992,10 +1174,30 @@ function UsuarioCRUDModal({ onClose }) {
 }
 
 function EmpleadoCRUDModal({ onClose }) {
-  return <CRUDModal title="Empleados" icon={Users} endpoint="empleados" onClose={onClose} fields={['id_usuario', 'puesto', 'salario']} />;
+  const [isCreating, setIsCreating] = useState(false);
+
+  if (isCreating) {
+    return (
+      <NewEmpleadoModal
+        onClose={() => setIsCreating(false)}
+        onSaveSuccess={() => setIsCreating(false)}
+      />
+    );
+  }
+
+  return (
+    <CRUDModal
+      title="Empleados"
+      icon={Users}
+      endpoint="empleados"
+      onClose={onClose}
+      fields={['nombre_empleado', 'puesto', 'salario']}
+      customAction={() => setIsCreating(true)}
+    />
+  );
 }
 
-// ---COMPONENTE PRINCIPAL APP
+// --- COMPONENTE PRINCIPAL APP ---
 
 function App() {
   const { obtenerPrediccionSemanal, entrenarModelo, loading: aiLoading } = usePredictions();
@@ -1174,7 +1376,6 @@ function App() {
           setMesasEnLimpieza(allMesas.filter(m => m.estado && String(m.estado).toLowerCase().includes('limpieza')));
         }
       } catch (e) {
-        // ignore alert fetch errors
       }
 
       // Cargar últimos movimientos
@@ -1194,7 +1395,6 @@ function App() {
     return () => clearInterval(interval);
   }, [cargarDatosDashboard]);
 
-  // Escuchar eventos globales para recargar el dashboard (por ejemplo: nueva reserva)
   useEffect(() => {
     const handler = () => cargarDatosDashboard();
     window.addEventListener('dashboard:refresh', handler);
@@ -1222,7 +1422,6 @@ function App() {
           <button onClick={() => setShowProductCRUD(true)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-800 transition-colors text-left"><Package size={20} className="text-emerald-400" /><span className="text-sm">Gestión de productos</span></button>
           <button onClick={() => setShowReservaCRUD(true)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-800 transition-colors text-left"><Bookmark size={20} className="text-emerald-400" /><span className="text-sm">Gestión de reservas</span></button>
           <button onClick={() => setShowClienteCRUD(true)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-800 transition-colors text-left"><Users size={20} className="text-emerald-400" /><span className="text-sm">Gestión de clientes</span></button>
-          <button onClick={() => setShowReporteCRUD(true)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-800 transition-colors text-left"><FileText size={20} className="text-emerald-400" /><span className="text-sm">Gestión de reportes</span></button>
           <button onClick={() => setShowMesaCRUD(true)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-800 transition-colors text-left"><CreditCard size={20} className="text-emerald-400" /><span className="text-sm">Gestión de mesas</span></button>
           <button onClick={() => setShowUsuarioCRUD(true)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-800 transition-colors text-left"><Users size={20} className="text-emerald-400" /><span className="text-sm">Gestión de usuarios</span></button>
           <button onClick={() => setShowEmpleadoCRUD(true)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-gray-800 transition-colors text-left"><Users size={20} className="text-emerald-400" /><span className="text-sm">Gestión de empleados</span></button>
@@ -1393,9 +1592,6 @@ function App() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* Removed: Alertas / Historial (replaced by expanded Próximas reservas + real data) */}
-
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Próximas reservas</h3>

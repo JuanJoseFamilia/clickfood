@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs'; // O 'bcrypt' según lo que tengas instalado
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -52,8 +52,9 @@ class Usuario {
 
 
   static async buscarPorEmail(email) {
-    console.log("--- DEBUG: Buscando usuario por email:", email);
+    console.log("--- MODELO: Buscando usuario por email:", email);
 
+    // Buscar en tabla base Usuarios
     const { data: usuario, error } = await supabase
       .from('usuarios')
       .select('*')
@@ -63,19 +64,35 @@ class Usuario {
     if (error && error.code !== 'PGRST116') throw error;
 
     if (usuario) {
+        // SI ES CLIENTE: Buscar teléfono
+        if (usuario.rol === 'cliente') {
+            const { data: cliente } = await supabase
+                .from('clientes')
+                .select('telefono, id_cliente')
+                .eq('id_usuario', usuario.id_usuario)
+                .maybeSingle(); 
+            
+            if (cliente) {
+                console.log("--- MODELO: Cliente detectado. Teléfono:", cliente.telefono);
+                usuario.telefono = cliente.telefono;
+                usuario.id_cliente_real = cliente.id_cliente; 
+            }
+        }
 
-        const { data: cliente } = await supabase
-            .from('clientes')
-            .select('telefono, id_cliente')
-            .eq('id_usuario', usuario.id_usuario)
-            .maybeSingle(); 
-        
-        if (cliente) {
-            console.log("--- DEBUG: Cliente encontrado. Agregando teléfono:", cliente.telefono);
-            usuario.telefono = cliente.telefono;
-            usuario.id_cliente_real = cliente.id_cliente; 
-        } else {
-            console.log("--- DEBUG: Usuario encontrado, pero NO tiene registro en tabla 'clientes'.");
+        // SI ES EMPLEADO: Buscar Puesto
+        if (usuario.rol === 'empleado') {
+            const { data: empleado } = await supabase
+                .from('empleados')
+                .select('puesto, id_empleado')
+                .eq('id_usuario', usuario.id_usuario)
+                .maybeSingle();
+
+            if (empleado) {
+                console.log("--- MODELO: Empleado detectado. Puesto:", empleado.puesto);
+                usuario.puesto = empleado.puesto; 
+            } else {
+                console.log("--- MODELO: Es empleado pero no está en la tabla 'empleados'");
+            }
         }
     }
 

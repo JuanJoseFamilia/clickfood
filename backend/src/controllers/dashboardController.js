@@ -8,7 +8,7 @@ export const obtenerEstadisticasDelDia = async (req, res) => {
         const inicioDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
         const finDelDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
 
-        // 1. Contar pedidos del día
+        // Contar pedidos del día
         const { data: pedidosDelDia, error: errorPedidos } = await supabase
             .from('pedidos')
             .select('id_pedido')
@@ -17,7 +17,7 @@ export const obtenerEstadisticasDelDia = async (req, res) => {
 
         const countPedidosDelDia = pedidosDelDia?.length || 0;
 
-        // 2. Sumar ingresos del día
+        // Sumar ingresos del día
         const { data: ingresosDelDia, error: errorIngresos } = await supabase
             .from('pedidos')
             .select('total')
@@ -26,7 +26,7 @@ export const obtenerEstadisticasDelDia = async (req, res) => {
 
         const ingresosTotal = ingresosDelDia?.reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0) || 0;
 
-        // 3. Contar clientes activos (que hayan hecho pedidos o reservas)
+        // Contar clientes activos (que hayan hecho pedidos o reservas)
         const { data: clientesActivos, error: errorClientes } = await supabase
             .from('pedidos')
             .select('id_cliente', { count: 'exact' })
@@ -35,7 +35,7 @@ export const obtenerEstadisticasDelDia = async (req, res) => {
 
         const countClientesActivos = clientesActivos?.length || 0;
 
-        // 4. Contar reservas próximas (próximas 7 días)
+        // Contar reservas próximas (próximas 7 días)
         const fechaFutura = new Date();
         fechaFutura.setDate(fechaFutura.getDate() + 7);
 
@@ -170,7 +170,7 @@ export const obtenerCategoriasMasVendidas = async (req, res) => {
         // Agrupar por categoría (solo pedidos completados)
         const categoriasMap = {};
         detalles?.forEach(d => {
-            // Solo contar si el pedido está completado
+            // Solo contar si el pedido esta completado
             if (d.pedidos?.estado === 'Completado') {
                 const categoria = d.productos?.categoria || 'Sin categoría';
                 if (!categoriasMap[categoria]) {

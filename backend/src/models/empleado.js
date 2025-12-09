@@ -19,7 +19,7 @@ class Empleado {
         
         return data.map(e => ({
             ...e,
-            nombre_usuario: e.usuarios?.nombre || 'Desconocido',
+            nombre_empleado: e.usuarios?.nombre || 'Desconocido',
             email_usuario: e.usuarios?.email || 'Sin email',
             rol_usuario: e.usuarios?.rol || 'N/A'
         }));
@@ -40,41 +40,42 @@ class Empleado {
     }
 
     static async crearConUsuario(datos) {
-        const { nombre, email, contraseña, puesto, salario } = datos;
+const { id_usuario, puesto, salario } = datos;
 
-        const { data: usuario, error: errorUsuario } = await supabase
+        // Verificar que el usuario exista
+        const { data: usuarioExiste, error: errorBusqueda } = await supabase
             .from('usuarios')
-            .insert([{
-                nombre: nombre,
-                email: email,
-                contraseña: contraseña, 
-                rol: 'empleado' 
-            }])
-            .select()
+            .select('id_usuario')
+            .eq('id_usuario', id_usuario)
             .single();
 
-        if (errorUsuario) {
-            console.error("Error al crear usuario base para empleado:", errorUsuario);
-            throw new Error("No se pudo registrar el usuario (posiblemente el email ya existe).");
+        if (!usuarioExiste) {
+            throw new Error("El usuario con ese ID no existe.");
         }
 
-        const { data: empleado, error: errorEmpleado } = await supabase
+        // Insertar en la tabla empleados
+        const { data: nuevoEmpleado, error } = await supabase
             .from('empleados')
             .insert([{
-                id_usuario: usuario.id_usuario,
+                id_usuario: parseInt(id_usuario),
                 puesto: puesto,
                 salario: parseFloat(salario)
             }])
             .select()
             .single();
 
-        if (errorEmpleado) {
-            await supabase.from('usuarios').delete().eq('id_usuario', usuario.id_usuario);
-            console.error("Error al crear perfil de empleado:", errorEmpleado);
-            throw errorEmpleado;
+        if (error) {
+            if (error.code === '23505') throw new Error("Este usuario ya es un empleado.");
+            throw error;
         }
 
-        return { ...empleado, usuario };
+
+        await supabase
+            .from('usuarios')
+            .update({ rol: 'empleado' })
+            .eq('id_usuario', id_usuario);
+
+        return nuevoEmpleado;
     }
 
     static async actualizar(id, datosEmpleado) {

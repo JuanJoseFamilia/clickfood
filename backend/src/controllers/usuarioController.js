@@ -2,31 +2,33 @@
 import bcrypt from "bcrypt";
 import { supabase } from "../config/supabase.js";
 
-//REGISTRO
-// src/controllers/usuarioController.js
-
 export const registrarUsuario = async (req, res) => {
   try {
     const { nombre, email, contraseña, rol } = req.body;
-    // ... (validaciones y hash de contraseña igual que antes) ...
+    
+    if (!email || !contraseña || !nombre) {
+      return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
 
-    // 1. INSERTAR USUARIO
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(contraseña, saltRounds);
+
+
+    //Insertar usuario
     const { data: usuarioData, error: usuarioError } = await supabase
       .from("usuarios")
       .insert([{ nombre, email, contraseña: hashedPassword, rol }])
       .select("id_usuario, nombre, email, rol")
-      .single(); // Usamos single() para obtener el objeto directo
+      .single(); 
 
     if (usuarioError) throw usuarioError;
 
-    // 2. ¡TRUCO! CREAR PERFIL DE CLIENTE AUTOMÁTICAMENTE
-    // Si el rol es 'Cliente', le creamos su fila en la tabla clientes de una vez
     if (rol === 'cliente') {
         const { error: clienteError } = await supabase
             .from("clientes")
             .insert([{ 
-                id_usuario: usuarioData.id_usuario, // Conectamos con el usuario recién creado
-                telefono: "", // Lo dejamos vacío para que lo llene luego
+                id_usuario: usuarioData.id_usuario, 
+                telefono: "", 
                 direccion: "" 
             }]);
         
@@ -44,18 +46,17 @@ export const registrarUsuario = async (req, res) => {
   }
 };
 
-// LOGIN
-// LOGIN
+// Login
 export const loginUsuario = async (req, res) => {
-  console.log("--- INICIO LOGIN ---"); // 1. Ver que arranca
   try {
     const { email, contraseña } = req.body;
 
+    // Validar entrada
     if (!email || !contraseña) {
       return res.status(400).json({ error: "Email y contraseña son obligatorios." });
     }
 
-    // 1. Buscar usuario
+    // Buscar usuario en tabla 'usuarios'
     const { data: usuario, error: usuarioError } = await supabase
       .from("usuarios")
       .select("*")
@@ -63,55 +64,67 @@ export const loginUsuario = async (req, res) => {
       .single();
 
     if (usuarioError || !usuario) {
-      console.log("Error buscando usuario:", usuarioError);
-      return res.status(401).json({ error: "Credenciales incorrectas." });
+      return res.status(401).json({ error: "Usuario no encontrado." });
     }
 
-    // 2. Verificar contraseña
+    // Verificar contraseña
     const contraseñaValida = await bcrypt.compare(contraseña, usuario.contraseña);
     if (!contraseñaValida) {
-      return res.status(401).json({ error: "Credenciales incorrectas." });
+      return res.status(401).json({ error: "Contraseña incorrecta." });
     }
 
-    console.log(`Usuario encontrado ID: ${usuario.id_usuario}. Buscando perfil de cliente...`);
+    console.log(`Usuario autenticado: ${usuario.nombre} (${usuario.rol})`);
 
-    // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
-    // 3. Buscar datos del Cliente y CAPTURAR EL ERROR
-    const { data: cliente, error: clienteError } = await supabase
-      .from("clientes")
-      .select("id_cliente, telefono")
-      .eq("id_usuario", usuario.id_usuario)
-      .maybeSingle();
+    // Obtener datos extra según el ROL
+    let puestoEncontrado = null; // Para empleados
+    let datosCliente = {};       // Para clientes
 
-    // IMPRIMIR LO QUE RESPONDE SUPABASE
-    if (clienteError) {
-        console.error("🔴 ERROR CRÍTICO al buscar cliente:", clienteError);
-        // Si sale este error en tu consola, es 100% problema de permisos/RLS
-    } else {
-        console.log("🟢 Respuesta de Clientes:", cliente); 
-        // Si aquí sale null, es que el ID no coincide. Si sale datos, funcionó.
+    if (usuario.rol === 'empleado') {
+        // Buscar en la tabla empleados
+        const { data: empleado, error: errEmp } = await supabase
+            .from("empleados")
+            .select("puesto")
+            .eq("id_usuario", usuario.id_usuario)
+            .maybeSingle(); 
+
+        if (empleado) {
+            puestoEncontrado = empleado.puesto; 
+            console.log("Es empleado. Puesto detectado:", puestoEncontrado);
+        } else {
+            console.log("Es empleado en 'usuarios' pero NO está en la tabla 'empleados'.");
+        }
+    } 
+    else if (usuario.rol === 'cliente') {
+        // Buscar en la tabla clientes
+        const { data: cliente } = await supabase
+            .from("clientes")
+            .select("id_cliente, telefono")
+            .eq("id_usuario", usuario.id_usuario)
+            .maybeSingle();
+        
+        if (cliente) datosCliente = cliente;
     }
 
-    // 4. Respuesta
-    return res.status(200).json({
+    res.status(200).json({
       mensaje: "Login exitoso",
       usuario: {
         id_usuario: usuario.id_usuario,
-        id_cliente: cliente ? cliente.id_cliente : null, 
         nombre: usuario.nombre,
         email: usuario.email,
-        telefono: cliente ? cliente.telefono : "No registrado", 
-        rol: usuario.rol
+        rol: usuario.rol,
+        puesto: puestoEncontrado, 
+        telefono: datosCliente.telefono || null
       }
     });
 
   } catch (err) {
-    console.error("Error general en login:", err.message);
-    res.status(500).json({ error: "Error al iniciar sesión." });
+    console.error("Error en login:", err.message);
+    res.status(500).json({ error: "Error interno del servidor." });
   }
 };
 
 
+//Obtener todos los usuario
 export const getAllUsuarios = async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -128,6 +141,7 @@ export const getAllUsuarios = async (req, res) => {
 };
 
 
+//Obtener todos los usuario por id
 export const getUsuarioById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -153,6 +167,7 @@ export const getUsuarioById = async (req, res) => {
 };
 
 
+//Actualizar usuario
 export const updateUsuario = async (req, res) => {
   try {
     const { id } = req.params;
@@ -196,6 +211,7 @@ export const updateUsuario = async (req, res) => {
 };
 
 
+//Eliminar usuario
 export const deleteUsuario = async (req, res) => {
   try {
     const { id } = req.params;

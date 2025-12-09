@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set "VIRTUAL_ENV=C:\Users\DalbertSanchez\OneDrive - STI DATA AND BUSINESS INTELLIGENCE\Documents\clickfood\.venv"
+set "VIRTUAL_ENV=C:\clickfood\.venv"
 
 if not defined PROMPT set PROMPT=$P$G
 

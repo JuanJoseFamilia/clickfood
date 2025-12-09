@@ -4,8 +4,8 @@ import { supabase } from '../config/supabase.js';
 class Mesa {
 
 
+  //Obtener todas las mesas
   static async obtenerTodas() {
-    // Ordenamos por número para que salgan en orden en la lista
     const { data, error } = await supabase
       .from('mesas')
       .select('*')
@@ -15,6 +15,7 @@ class Mesa {
     return data;
   }
 
+  //Obtener las mesas por el id
   static async obtenerPorId(id) {
     const { data, error } = await supabase
       .from('mesas')
@@ -26,7 +27,7 @@ class Mesa {
     return data;
   }
 
-
+  //Obtener las mesas disponibles
 static async obtenerDisponibles(fechaHora) {
 
     const { data: ocupadas } = await supabase
@@ -54,19 +55,21 @@ static async obtenerDisponibles(fechaHora) {
     return data;
 }
   
-  // ... (Asegúrate de tener crear, actualizar, eliminar aquí abajo) ...
+  //Crear una mesa
    static async crear(datosMesa) {
     const { data, error } = await supabase.from('mesas').insert([datosMesa]).select().single();
     if (error) throw error;
     return data;
   }
   
+    //Actualizar una mesa
   static async actualizar(id, datosMesa) {
     const { data, error } = await supabase.from('mesas').update(datosMesa).eq('id_mesa', id).select().single();
     if (error) throw error;
     return data;
   }
 
+  //Eliminar una mesa
   static async eliminar(id) {
     const { data, error } = await supabase.from('mesas').delete().eq('id_mesa', id).select();
     if (error) throw error;

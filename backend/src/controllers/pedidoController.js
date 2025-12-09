@@ -1,6 +1,6 @@
 // backend/src/controllers/pedidoController.js
+import { supabase } from "../config/supabase.js"; 
 import Pedido from '../models/pedido.js';
-
 
 export const obtenerDetallesPedido = async (req, res) => {
     try {
@@ -16,11 +16,50 @@ export const obtenerDetallesPedido = async (req, res) => {
     }
 };
 
-// Obtener todos los pedidos
+
 export const obtenerPedidos = async (req, res) => {
     try {
-        const pedidos = await Pedido.obtenerTodos();
-        res.status(200).json(pedidos);
+        const { estado } = req.query;
+        let query = supabase
+            .from('pedidos')
+            .select(`
+                *,
+                clientes (
+                    usuarios ( nombre )
+                ),
+                empleados (
+                    usuarios ( nombre )
+                ),
+                detalle_pedido (
+                    cantidad,
+                    productos ( nombre )
+                )
+            `)
+            .order('fecha_hora', { ascending: false });
+
+        if (estado) {
+            query = query.eq('estado', estado);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+
+        const pedidosFormateados = data.map(p => ({
+            ...p,
+            nombre_cliente: p.clientes?.usuarios?.nombre || 'Cliente General',
+            
+            nombre_empleado: p.empleados?.usuarios?.nombre || 'Sin Asignar',
+            
+            detalles: p.detalle_pedido.map(d => ({
+                cantidad: d.cantidad,
+                nombre_producto: d.productos ? d.productos.nombre : 'Producto desconocido'
+            }))
+        }));
+
+        res.status(200).json(pedidosFormateados);
+
     } catch (error) {
         console.error('Error en obtenerPedidos:', error);
         res.status(500).json({
@@ -49,32 +88,130 @@ export const obtenerPedidoPorId = async (req, res) => {
 };
 
 export const crearPedido = async (req, res) => {
-    try {
-        const { id_cliente, id_empleado, total, estado, fecha_hora, items } = req.body;
+  try {
+    const { id_mesa, id_empleado, total, productos, notas, id_reserva, id_cliente } = req.body;
 
-        if (!id_cliente || !id_empleado || !items || items.length === 0) {
-            return res.status(400).json({
-                message: 'Faltan datos requeridos o el pedido no tiene productos.'
-            });
-        }
-
-        const nuevoPedido = await Pedido.crearConDetalles({
-            id_cliente,
-            id_empleado,
-            total,
-            estado,
-            fecha_hora,
-            items
-        });
-
-        res.status(201).json(nuevoPedido);
-    } catch (error) {
-        console.error('Error en crearPedido:', error);
-        res.status(500).json({
-            message: 'Error al crear el pedido',
-            error: error.message
-        });
+    if (!productos || productos.length === 0) {
+      return res.status(400).json({ error: "No hay productos en la orden." });
     }
+
+
+    const { data: mesaData, error: mesaError } = await supabase
+        .from('mesas')
+        .select('id_mesa')
+        .eq('numero', id_mesa) 
+        .single();
+
+    if (mesaError || !mesaData) {
+        return res.status(400).json({ error: `La Mesa #${id_mesa} no existe en el sistema.` });
+    }
+
+    const idMesaReal = mesaData.id_mesa; 
+
+    let idClienteEncontrado = null;
+    if (id_reserva) {
+        const { data: reservaData } = await supabase
+            .from('reservas')
+            .select('id_cliente')
+            .eq('id_reserva', id_reserva)
+            .single();
+        
+        if (reservaData) idClienteEncontrado = reservaData.id_cliente;
+    }
+
+    // Insertar pedido
+    const { data: pedidoData, error: pedidoError } = await supabase
+      .from("pedidos")
+      .insert([
+        {
+          id_empleado: id_empleado,
+          id_mesa: idMesaReal, 
+          id_cliente: id_cliente || idClienteEncontrado, 
+          id_reserva: id_reserva ? parseInt(id_reserva) : null,
+          total: total,
+          estado: 'pendiente',
+          fecha_hora: new Date(),
+          notas: notas
+        }
+      ])
+      .select("id_pedido")
+      .single();
+
+    if (pedidoError) throw pedidoError;
+
+    const nuevoIdPedido = pedidoData.id_pedido;
+
+    // Insertar detalles
+    const detallesParaInsertar = productos.map((prod) => ({
+      id_pedido: nuevoIdPedido,
+      id_producto: prod.id_producto,   
+      cantidad: prod.cantidad,
+      subtotal: prod.precio * prod.cantidad
+    }));
+
+    const { error: detallesError } = await supabase
+      .from("detalle_pedido")
+      .insert(detallesParaInsertar);
+
+    if (detallesError) {
+      await supabase.from("pedidos").delete().eq("id_pedido", nuevoIdPedido);
+      throw detallesError;
+    }
+
+    res.status(201).json({
+      mensaje: "Orden creada exitosamente",
+      id_pedido: nuevoIdPedido
+    });
+
+  } catch (err) {
+    console.error("Error al crear pedido:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// Obtener pedidos pendientes para la cocina
+export const obtenerPedidosCocina = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select(`
+        *,
+        detalle_pedido (
+          cantidad,
+          productos ( nombre )
+        )
+      `)
+      .in('estado', ['pendiente', 'cocinando'])
+      .order('fecha_hora', { ascending: true });
+
+    if (error) throw error;
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("Error obteniendo comandas:", err.message);
+    res.status(500).json({ error: "Error al cargar pedidos" });
+  }
+};
+
+// Cambiar estado (De 'pendiente' a 'completado')
+export const actualizarEstadoPedido = async (req, res) => {
+  try {
+    const { id } = req.params; 
+    const { estado } = req.body; 
+
+    const { error } = await supabase
+      .from('pedidos')
+      .update({ estado: estado })
+      .eq('id_pedido', id);
+
+    if (error) throw error;
+
+    res.status(200).json({ mensaje: "Estado actualizado correctamente" });
+  } catch (err) {
+    console.error("Error actualizando pedido:", err.message);
+    res.status(500).json({ error: "Error al actualizar pedido" });
+  }
 };
 
 // Actualizar un pedido

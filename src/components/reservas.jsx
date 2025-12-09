@@ -388,7 +388,6 @@ function ReservasClientePage() {
           </div>
         )}
 
-        {/* PASO 4: CONFIRMACIÓN - AQUI ESTÁ EL CAMBIO */}
         {step === 4 && reservaConfirmada && (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">

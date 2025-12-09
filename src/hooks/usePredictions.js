@@ -7,21 +7,13 @@ export const usePredictions = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  /**
-   * Helper para extraer el mensaje de error real del backend
-   */
+
   const getErrorMessage = (err, defaultMsg) => {
-    // 1. Intentamos obtener el error específico que manda el backend (ej: "Modelo no encontrado")
     const backendError = err.response?.data?.error;
-    // 2. Si no, buscamos el mensaje genérico
     const backendMessage = err.response?.data?.message;
-    // 3. Si no, usamos el mensaje por defecto
     return backendError || backendMessage || defaultMsg;
   };
 
-  /**
-   * Verifica si el servicio de IA está disponible
-   */
   const verificarEstado = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -37,9 +29,6 @@ export const usePredictions = () => {
     }
   }, []);
 
-  /**
-   * Entrena el modelo con datos históricos
-   */
   const entrenarModelo = useCallback(async (restauranteId, mesesHistorico = 3) => {
     setLoading(true);
     setError(null);
@@ -58,9 +47,7 @@ export const usePredictions = () => {
     }
   }, []);
 
-  /**
-   * Obtiene predicción para fecha y hora específica
-   */
+
   const obtenerPrediccion = useCallback(async (restauranteId, fecha, hora) => {
     setLoading(true);
     setError(null);
@@ -79,9 +66,7 @@ export const usePredictions = () => {
     }
   }, []);
 
-  /**
-   * Obtiene predicción semanal completa
-   */
+
   const obtenerPrediccionSemanal = useCallback(async (restauranteId) => {
     setLoading(true);
     setError(null);
@@ -98,9 +83,6 @@ export const usePredictions = () => {
     }
   }, []);
 
-  /**
-   * Obtiene recomendación de stock para próximas 24h
-   */
   const obtenerRecomendacionStock = useCallback(async (restauranteId) => {
     setLoading(true);
     setError(null);

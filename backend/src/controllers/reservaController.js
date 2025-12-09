@@ -1,5 +1,5 @@
 // backend/src/controllers/reservaController.js
-import Reserva from '../models/reserva.js'; // CAMBIO: Módulos ES
+import Reserva from '../models/reserva.js'; 
 
 // Obtener todas las reservas
 export const obtenerReservas = async (req, res) => {
@@ -16,27 +16,46 @@ export const obtenerReservas = async (req, res) => {
 };
 
 // Obtener una reserva por ID
+import { supabase } from "../config/supabase.js";
+
 export const obtenerReservaPorId = async (req, res) => {
-    try {
-        const reserva = await Reserva.obtenerPorId(req.params.id);
+  try {
+    const { id } = req.params;
 
-        if (!reserva) {
-            return res.status(404).json({
-                message: 'Reserva no encontrada'
-            });
-        }
+    const { data, error } = await supabase
+      .from('reservas')
+      .select(`
+        *,
+        mesas ( numero ),
+        clientes (
+          id_cliente,
+          telefono,
+          usuarios ( nombre ) 
+        )
+      `)
+      .eq('id_reserva', id)
+      .single();
 
-        res.status(200).json(reserva);
-    } catch (error) {
-        console.error(`ERROR AL OBTENER RESERVA POR ID (${req.params.id}):`, error);
-        res.status(500).json({
-            message: 'Error al obtener la reserva',
-            error: error.message
-        });
+    if (error) throw error;
+
+    if (!data) {
+      return res.status(404).json({ error: "Reserva no encontrada" });
     }
+
+    const nombreCliente = data.clientes?.usuarios?.nombre || 'Desconocido';
+    
+    const respuesta = {
+        ...data,
+        nombre_cliente_final: nombreCliente 
+    };
+
+    res.status(200).json(respuesta);
+  } catch (err) {
+    console.error("Error buscando reserva:", err);
+    res.status(500).json({ error: "Error al buscar la reserva" });
+  }
 };
 
-// Crear una nueva reserva
 export const crearReserva = async (req, res) => {
     try {
         const { id_cliente, id_mesa, fecha_hora, estado, descripcion, comentarios } = req.body;
