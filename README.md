@@ -40,64 +40,64 @@ Propósito: Análisis predictivo de demanda.
 
 La solución se estructura en módulos interconectados:
 
-  *Núcleo (Backend API): Centraliza la lógica de negocio, validaciones y conexión a la base de datos.
-  
-  *Cliente Web (Dashboard): Interfaz para gerentes y cajeros.
-  
-  *Cliente Móvil (App): Interfaz ligera para camareros (toma de comandas en mesa) o clientes finales.
-  
-  *Motor de IA: Servicio que corre en segundo plano, analiza el histórico de la base de datos y retorna proyecciones al Dashboard.
+        *Núcleo (Backend API): Centraliza la lógica de negocio, validaciones y conexión a la base de datos.
+
+        *Cliente Web (Dashboard): Interfaz para gerentes y cajeros.
+
+        *Cliente Móvil (App): Interfaz ligera para camareros (toma de comandas en mesa) o clientes finales.
+
+        *Motor de IA: Servicio que corre en segundo plano, analiza el histórico de la base de datos y retorna proyecciones al Dashboard.
 
 
 
-4. Funcionalidades Clave
-    *Módulo Predictivo (IA)
-    Este componente diferencia a ClickFood de un POS tradicional. Utiliza algoritmos de aprendizaje automático para:
-    
-    Predicción de Demanda: Analiza el histórico de ventas para predecir qué platos serán los más solicitados en días específicos.
-    
-    Optimización de Inventario: Sugiere compras de insumos basadas en la demanda proyectada, reduciendo el desperdicio (mermas).
-    
-    *Integración Móvil
-    Extensión del sistema para dispositivos portátiles:
-    
-    Sincronización en Tiempo Real: Los pedidos tomados desde el móvil impactan instantáneamente en la cocina y en la caja central.
-    
-    Movilidad del Staff: Permite a los camareros gestionar mesas y estatus de pedidos sin desplazarse a una terminal fija.
-    
-    *Gestión Administrativa (Web)
-    Usuarios y Roles: Control de acceso jerárquico (Admin, Empleado, Cliente).
-    
-    Recursos Humanos: Gestión de nómina y puestos de empleados.
-    
-    Mapa de Mesas: Visualización gráfica del estado del salón (Disponible/Reservada).
-    
-    *Gestión de Pedidos (Omnicanal)
-    Centraliza las órdenes provenientes tanto de la Web como de la App Móvil:
+  4. Funcionalidades Clave
+      *Módulo Predictivo (IA)
+      Este componente diferencia a ClickFood de un POS tradicional. Utiliza algoritmos de aprendizaje automático para:
 
-Flujo de estados: Pendiente → En preparación → Completado.
+      Predicción de Demanda: Analiza el histórico de ventas para predecir qué platos serán los más solicitados en días específicos.
 
-Registro de Tiempos: Timestamp exacto para medir eficiencia en cocina.
+      Optimización de Inventario: Sugiere compras de insumos basadas en la demanda proyectada, reduciendo el desperdicio (mermas).
+
+      *Integración Móvil
+      Extensión del sistema para dispositivos portátiles:
+
+      Sincronización en Tiempo Real: Los pedidos tomados desde el móvil impactan instantáneamente en la cocina y en la caja central.
+
+      Movilidad del Staff: Permite a los camareros gestionar mesas y estatus de pedidos sin desplazarse a una terminal fija.
+
+      *Gestión Administrativa (Web)
+      Usuarios y Roles: Control de acceso jerárquico (Admin, Empleado, Cliente).
+
+      Recursos Humanos: Gestión y puestos de empleados.
+
+      Mapa de Mesas: Visualización gráfica del estado de las mesas (Disponible/Reservada).
+
+      *Gestión de Pedidos (Omnicanal)
+      Centraliza las órdenes provenientes tanto de la Web como de la App Móvil:
+
+  Flujo de estados: Pendiente → En preparación → Completado.
+
+  Registro de Tiempos: Timestamp exacto para medir eficiencia en cocina.
 
 
-5. Guía de Despliegue Técnico
-Configuración del Entorno
-    El sistema requiere la orquestación de los servicios Web, Móvil y el servicio de IA.
-    
-    Backend (Node.js):
-    
-    Configurar variables de entorno (.env) con credenciales de Supabase.
-    
-    Exponer puertos para permitir peticiones CORS desde la Web y la App Móvil.
-    
-    Servicio de IA:
-    
-    Requiere conexión de lectura a la base de datos PostgreSQL para entrenar/alimentar el modelo.
-    
-    Expone endpoints específicos (ej: /api/predict) que son consumidos por el Dashboard para mostrar gráficas.
-    
-    Frontend Web & Móvil:
-    
-    Ambos clientes deben apuntar a la URL base del Backend principal.
-    
-    La autenticación es compartida; un usuario creado en la web puede loguearse en la app móvil.
+  5. Guía de Despliegue Técnico
+  Configuración del Entorno
+      El sistema requiere la orquestación de los servicios Web, Móvil y el servicio de IA.
+
+      Backend (Node.js):
+
+      Configurar variables de entorno (.env) con credenciales de Supabase.
+
+      Exponer puertos para permitir peticiones CORS desde la Web y la App Móvil.
+
+      Servicio de IA:
+
+      Requiere conexión de lectura a la base de datos SupaBase para entrenar/alimentar el modelo.
+
+      Expone endpoints específicos que son consumidos por el Dashboard para mostrar gráficas.
+
+      Frontend Web & Móvil:
+
+      Ambos clientes deben apuntar a la URL base del Backend principal.
+
+      La autenticación es compartida; un usuario creado en la web puede loguearse en la app móvil.
