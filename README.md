@@ -1,131 +1,103 @@
-ClickFood: Sistema de Gestión de Restaurantes 
+Documentación Técnica Completa: Ecosistema ClickFood
 
-Descripción del Proyecto
+1. Descripción del Proyecto
+ClickFood es un ecosistema tecnológico integral para la gestión gastronómica. La plataforma no solo abarca la administración operativa (POS, Inventario, RRHH), sino que integra inteligencia de negocios mediante modelos predictivos y extiende su accesibilidad a través de aplicaciones móviles.
 
-ClickFood es un sistema integral de gestión de restaurantes (Point of Sale, POS, y Backend Dashboard) diseñado para optimizar las operaciones diarias, desde la toma de pedidos y la gestión de inventario hasta la administración de usuarios y la centralización de datos en tiempo real.
+El sistema utiliza una arquitectura de Microservicios API-First, permitiendo que múltiples clientes (Web, Móvil, Dashboard) consuman una lógica de negocio centralizada y escalable.
 
-Este proyecto sigue una arquitectura de Microservicios API-First, utilizando tecnologías modernas de JavaScript tanto en el Frontend como en el Backend.
+2. Stack Tecnológico Ampliado
 
-Tecnologías Utilizadas
+El proyecto orquesta múltiples tecnologías para cubrir el frontend, backend, movilidad y ciencia de datos.
 
-Componente
+        2.1 Web Frontend (Administración y POS)
+        Framework: React.js + Vite.
 
-Tecnología
+        Estilos: Tailwind CSS.
 
-Descripción
+        Visualización: Recharts (Dashboard analítico).
 
-Frontend
--React + Tailwind CSS
--Interfaz de usuario moderna, modular y completamente responsiva, utilizando componentes funcionales y hooks.
--Gráficos
--Recharts
+        2.2 Mobile (Cliente/Staff)
+        Tecnología: Flutter (Dart).
 
-Visualización de datos en el Dashboard (ventas diarias, categorías).
+        Enfoque: Multiplataforma (iOS/Android) con una única base de código.
 
-Backend
--Node.js + Express
--Servidor API RESTful construido sobre un entorno de Módulos ES (import/export).
--Base de Datos
--PostgreSQL vía Supabase
--Base de datos relacional robusta con servicios de autenticación y funciones de backend.
--ORM/Cliente
--Supabase Client
--Manejo directo de la comunicación y consultas SQL (PostgREST) a la base de datos.
+        Comunicación: Consumo de API RESTful centralizada.
 
+        2.3 Backend y Datos
+        Servidor Principal: Node.js con Express (REST API).
 
+        Base de Datos: PostgreSQL (vía Supabase).
 
-Estructura de la Aplicación
+        Autenticación: Supabase Auth (Integrado en Web y Móvil).
 
-El proyecto se divide en dos directorios principales: frontend (React) y backend (Node/Express).
+        2.4 Inteligencia Artificial y Data Science
+        Servicio de IA: Microservicio independiente (Python/Flask/FastAPI).
 
-Backend (/backend)
+Propósito: Análisis predictivo de demanda.
 
--index.js: Punto de entrada del servidor. Configura Express, Cors y enlaza todas las rutas con sus respectivos prefijos (ej: /pedidos).
 
--/src/routes: Define los endpoints de la API (ej: /pedidos, /usuarios). Usa router.get('/', ...) y router.patch('/:id', ...)
+3. Arquitectura del Sistema
 
--/src/controllers: Contiene la lógica de negocio. Recibe el req, valida los datos y llama al Modelo.
+La solución se estructura en módulos interconectados:
 
--/src/models: Capa de datos. Contiene la lógica de Supabase (CRUD) para interactuar directamente con las tablas (ej: Pedido.crear()).
+  *Núcleo (Backend API): Centraliza la lógica de negocio, validaciones y conexión a la base de datos.
+  
+  *Cliente Web (Dashboard): Interfaz para gerentes y cajeros.
+  
+  *Cliente Móvil (App): Interfaz ligera para camareros (toma de comandas en mesa) o clientes finales.
+  
+  *Motor de IA: Servicio que corre en segundo plano, analiza el histórico de la base de datos y retorna proyecciones al Dashboard.
 
--/config/supabase.js: Archivo de inicialización del cliente de Supabase.
 
 
+4. Funcionalidades Clave
+    *Módulo Predictivo (IA)
+    Este componente diferencia a ClickFood de un POS tradicional. Utiliza algoritmos de aprendizaje automático para:
+    
+    Predicción de Demanda: Analiza el histórico de ventas para predecir qué platos serán los más solicitados en días específicos.
+    
+    Optimización de Inventario: Sugiere compras de insumos basadas en la demanda proyectada, reduciendo el desperdicio (mermas).
+    
+    *Integración Móvil
+    Extensión del sistema para dispositivos portátiles:
+    
+    Sincronización en Tiempo Real: Los pedidos tomados desde el móvil impactan instantáneamente en la cocina y en la caja central.
+    
+    Movilidad del Staff: Permite a los camareros gestionar mesas y estatus de pedidos sin desplazarse a una terminal fija.
+    
+    *Gestión Administrativa (Web)
+    Usuarios y Roles: Control de acceso jerárquico (Admin, Empleado, Cliente).
+    
+    Recursos Humanos: Gestión de nómina y puestos de empleados.
+    
+    Mapa de Mesas: Visualización gráfica del estado del salón (Disponible/Reservada).
+    
+    *Gestión de Pedidos (Omnicanal)
+    Centraliza las órdenes provenientes tanto de la Web como de la App Móvil:
 
-Frontend (/frontend/src/)
+Flujo de estados: Pendiente → En preparación → Completado.
 
-dashboard.jsx: Componente principal que maneja el layout y el estado de la navegación.
+Registro de Tiempos: Timestamp exacto para medir eficiencia en cocina.
 
-CRUDModal (función): Componente genérico y reutilizable que maneja la interfaz de creación, lectura, edición y eliminación (CRUD) para todas las entidades (Pedidos, Mesas, Usuarios, etc.).
 
-
-
-Funcionalidades Clave Implementadas
-
-El sistema proporciona una administración completa de los recursos principales del restaurante:
-
-1-Gestión de Usuarios (CRUD):
-
-    -Permite crear, leer, actualizar y eliminar usuarios.
-    -Dropdown de Rol: Centraliza la asignación de roles (cliente, empleado, administrador).
-
-2-Gestión de Empleados (CRUD):
-
-    -Maneja datos específicos del empleado (id_usuario, puesto, salario).
-
-3-Gestión de Mesas (CRUD):
-
-    -Dropdown de Estado: Permite cambiar el estado de la mesa (Disponible, Reservada) fácilmente.
-
-4-Gestión de Pedidos (CRUD):
-
-    -Integración completa con la tabla pedidos de PostgreSQL.
-
-    -Dropdown de Estado: Permite cambiar el flujo del pedido (Pendiente, En preparación, Completado).
-
-    -Selector de Fecha/Hora: Usa el tipo de input datetime-local para garantizar el formato de timestamp.
-
-
-
-
-Configuración e Instalación
-
-1-Backend Setup
-
-Navega a la carpeta /backend.
-
-Instala las dependencias:
-
-npm install express cors dotenv @supabase/supabase-js bcrypt
-
-
-Crea un archivo .env en la raíz de la carpeta /backend y añade tus claves de Supabase.
-
-# .env
-SUPABASE_URL="TURL_DE_SUPABASE"
-SUPABASE_KEY="CLAVE_ANON_O_SERVICE_ROLE"
-PORT=5000
-
-
-
-Inicia el servidor:
-
-node index.js
-
-
-2-Frontend Setup (React)
-
-Navega a la carpeta /frontend.
-
-Instala las dependencias:
-
-npm install react react-dom recharts lucide-react tailwindcss postcss autoprefixer
-
-
-Inicia la aplicación:
-
-npm run dev
-
-(Abrir http://localhost:3000 en tu navegador).
-
-Desarrollado con enfoque en modularidad, escalabilidad y buenas prácticas.
+5. Guía de Despliegue Técnico
+Configuración del Entorno
+    El sistema requiere la orquestación de los servicios Web, Móvil y el servicio de IA.
+    
+    Backend (Node.js):
+    
+    Configurar variables de entorno (.env) con credenciales de Supabase.
+    
+    Exponer puertos para permitir peticiones CORS desde la Web y la App Móvil.
+    
+    Servicio de IA:
+    
+    Requiere conexión de lectura a la base de datos PostgreSQL para entrenar/alimentar el modelo.
+    
+    Expone endpoints específicos (ej: /api/predict) que son consumidos por el Dashboard para mostrar gráficas.
+    
+    Frontend Web & Móvil:
+    
+    Ambos clientes deben apuntar a la URL base del Backend principal.
+    
+    La autenticación es compartida; un usuario creado en la web puede loguearse en la app móvil.
