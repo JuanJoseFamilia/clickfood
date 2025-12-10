@@ -1,5 +1,5 @@
-import { BarChart, Bar, XAxis, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Tooltip, YAxis, CartesianGrid, LineChart, Line, Legend, ReferenceLine } from 'recharts';
-import { FileText, DollarSign, Users, CreditCard, Plus, AlertTriangle, ChevronRight, LogOut, Search, Edit2, Trash2, X, Save, Package, Bookmark, BrainCircuit, RefreshCw, Calendar, Clock, TrendingUp, Lightbulb, Activity, Sun, Snowflake, CloudSun, Leaf } from 'lucide-react';
+import { BarChart, Bar, XAxis, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Tooltip, YAxis, CartesianGrid} from 'recharts';
+import { FileText, DollarSign, Users, CreditCard, Plus, AlertTriangle,LogOut, Search, Edit2, Trash2, X, Save, Package, Bookmark, BrainCircuit, RefreshCw, Calendar, Clock, TrendingUp, Activity, Sun, Snowflake, CloudSun, Leaf } from 'lucide-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {Menu } from 'lucide-react'; 
 import { usePredictions } from '../hooks/usePredictions';

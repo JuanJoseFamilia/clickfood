@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, LogOut, Plus, Trash2, User, Loader, ClipboardList, Search, Calendar, MapPin } from 'lucide-react';
+import { LogOut, Plus, Trash2, Loader, ClipboardList, Search, Calendar, MapPin } from 'lucide-react';
 // 1. IMPORTAMOS LA LIBRERÍA DE NOTIFICACIONES
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -21,7 +21,7 @@ export default function Mesero() {
   const [enviando, setEnviando] = useState(false);
 
   // Datos
-  const [pedidos, setPedidos] = useState([]);
+  const [setPedidos] = useState([]);
   const [menuCategorizado, setMenuCategorizado] = useState({});
   const [cargandoMenu, setCargandoMenu] = useState(true);
   const [stats, setStats] = useState({ total: 0, cocina: 0, completados: 0 });
@@ -31,8 +31,8 @@ export default function Mesero() {
   // OBTENER USUARIO LOGUEADO
   const usuario = JSON.parse(localStorage.getItem('usuario')) || null;
 
-  // REF PARA EVITAR NOTIFICACIONES REPETIDAS
   const notificadosRef = useRef(new Set());
+  const isFirstLoad = useRef(true);
 
   // --- EFECTOS ---
   useEffect(() => {
@@ -63,27 +63,34 @@ export default function Mesero() {
     } catch (error) { console.error(error); } finally { setCargandoMenu(false); }
   };
 
-  const fetchPedidos = async () => {
+const fetchPedidos = async () => {
     try {
         const res = await fetch(`${API_URL}/pedidos`);
         if(res.ok) {
             const data = await res.json();
             const lista = Array.isArray(data) ? data : [];
 
-            // --- 2. LOGICA DE NOTIFICACIONES ---
+            
+            if (isFirstLoad.current) {
+                lista.forEach(pedido => {
+                    if (pedido.estado === 'Completado') {
+                        notificadosRef.current.add(pedido.id_pedido);
+                    }
+                });
+                isFirstLoad.current = false; 
+            }
+
             lista.forEach(pedido => {
-                // Si está completado, es mío, y NO te he avisado antes:
                 if (
                     pedido.estado === 'Completado' && 
                     pedido.id_empleado === usuario?.id_empleado && 
                     !notificadosRef.current.has(pedido.id_pedido)
                 ) {
-                    // DISPARAR ALERTA
                     toast.success(`✅ Orden #${pedido.id_pedido} (Mesa ${pedido.id_mesa}) lista para entregar`, {
                         duration: 6000,
                         position: 'top-center',
                         style: {
-                            background: '#22c55e', // Verde éxito
+                            background: '#22c55e',
                             color: '#fff',
                             fontWeight: 'bold',
                             border: '2px solid #fff',
@@ -92,11 +99,9 @@ export default function Mesero() {
                         icon: '🍽️',
                     });
 
-                    // Marcar como notificado para que no suene otra vez en 5 segundos
                     notificadosRef.current.add(pedido.id_pedido);
                 }
             });
-            // -----------------------------------
 
             setPedidos(lista.slice(0, 4)); 
             setStats({

@@ -177,6 +177,7 @@ export const obtenerPedidosCocina = async (req, res) => {
       .from('pedidos')
       .select(`
         *,
+        mesas ( numero ),
         detalle_pedido (
           cantidad,
           productos ( nombre )

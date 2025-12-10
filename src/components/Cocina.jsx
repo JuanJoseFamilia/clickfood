@@ -9,6 +9,9 @@ const Cocina = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+    const usuario = JSON.parse(localStorage.getItem('usuario')) || null;
+
+
   useEffect(() => {
     cargarComandas();
     const intervalo = setInterval(() => cargarComandas(false), 5000);
@@ -51,7 +54,7 @@ const Cocina = () => {
                 <span className="text-3xl ml-2">🍴</span>
            </div>
            <div className="h-10 w-px bg-gray-700 mx-4"></div>
-           <h1 className="text-xl text-gray-400 font-medium">Monitor de Cocina (KDS)</h1>
+           <h1 className="text-xl text-gray-400 font-medium">Monitor de Cocina</h1>
         </div>
         <button onClick={handleLogout} className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-5 py-2.5 rounded-lg border border-gray-700 transition">
           <LogOut size={18} /> Salir
@@ -65,7 +68,7 @@ const Cocina = () => {
           {pedidos.length === 0 ? (
             <div className="col-span-full text-center py-20 opacity-50">
                 <div className="text-6xl mb-4">👨‍🍳</div>
-                <h2 className="text-2xl font-bold">Todo limpio, Chef.</h2>
+                <h2 className="text-2xl font-bold">Todo limpio, Chef {usuario?.nombre || 'Chef'}.</h2>
             </div>
           ) : (
             pedidos.map((pedido) => (
@@ -73,11 +76,11 @@ const Cocina = () => {
                 <div className="p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-start">
                   <div>
                     <span className="block text-xs text-gray-400 uppercase tracking-wider font-bold mb-1">Mesa</span>
-                    <span className="text-3xl font-bold text-white">{pedido.id_mesa || '?'}</span>
+                    <span className="text-3xl font-bold text-white">{pedido.mesas?.numero || pedido.id_mesa || '?'}</span>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-1 text-gray-400 text-sm bg-gray-900 px-2 py-1 rounded">
-                        <Clock size={14}/> {new Date(pedido.fecha_hora).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        <Clock size={14}/> {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </div>
                     <span className="text-xs text-gray-500 mt-1 block">#{pedido.id_pedido}</span>
                   </div>

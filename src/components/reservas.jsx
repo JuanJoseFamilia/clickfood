@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Users, MapPin, Phone, Mail, Check, ChevronLeft, ChevronRight, Utensils, AlertCircle, Gift, LogOut, Home } from 'lucide-react';
+import { Calendar, Clock, Users, Check, ChevronLeft, ChevronRight, Utensils, AlertCircle, Gift, LogOut, Home } from 'lucide-react';
 
 function ReservasClientePage() {
   const navigate = useNavigate(); 

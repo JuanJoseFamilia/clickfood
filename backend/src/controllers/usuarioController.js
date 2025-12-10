@@ -116,7 +116,8 @@ export const loginUsuario = async (req, res) => {
         rol: usuario.rol,
         puesto: puestoEncontrado, 
         id_empleado: idEmpleadoEncontrado,
-        telefono: datosCliente.telefono || null
+        telefono: datosCliente.telefono || null,
+        id_cliente: datosCliente.id_cliente || null
       }
     });
 

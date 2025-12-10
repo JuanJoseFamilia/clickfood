@@ -4,16 +4,15 @@ import {
   Calendar,
   Clock,
   MapPin,
-  ChevronRight,
   Star,
   LogOut,
   Menu,
   X,
-  Bell,
   Loader,
   BookOpen,
   History,
-  Ban
+  Ban,
+  CheckCircle
 } from "lucide-react";
 
 export default function HomeCliente() {
@@ -110,6 +109,29 @@ export default function HomeCliente() {
         }
       }
     } catch (error) { console.error(error); } finally { setLoading(false); }
+  };
+
+
+  // --- CONFIRMAR RESERVA ---
+  const handleConfirmReservation = async (idReserva) => {
+
+    try {
+      const res = await fetch(`${API_URL}/reservas/${idReserva}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'Confirmada' }) 
+      });
+
+      if (res.ok) {
+        alert("✅ Reserva confirmada exitosamente.");
+        fetchData(usuario.id_usuario); 
+      } else {
+        alert("No se pudo confirmar la reserva.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error de conexión.");
+    }
   };
 
   // --- CANCELAR RESERVA ---
@@ -230,6 +252,19 @@ export default function HomeCliente() {
                             </span>
                         </div>
                       </div>
+
+
+                      {/* Botón CONFIRMAR (Solo si está pendiente) */}
+                       {(res.estado === 'pendiente' || res.estado === 'Pendiente') && (
+                           <button 
+                             onClick={() => handleConfirmReservation(res.id_reserva)}
+                             className="text-green-600 hover:text-green-800 hover:bg-green-50 p-2 rounded transition-colors flex flex-col items-center gap-1 text-xs font-medium"
+                             title="Confirmar Asistencia"
+                           >
+                               <CheckCircle size={20}/>
+                               Confirmar
+                           </button>
+                       )}
 
                       {/* Botón Cancelar (Solo si está pendiente o confirmada) */}
                       {(res.estado === 'pendiente' || res.estado === 'Pendiente') && (
