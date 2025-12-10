@@ -77,19 +77,21 @@ export const loginUsuario = async (req, res) => {
 
     // Obtener datos extra según el ROL
     let puestoEncontrado = null; // Para empleados
+    let idEmpleadoEncontrado = null;
     let datosCliente = {};       // Para clientes
 
     if (usuario.rol === 'empleado') {
         // Buscar en la tabla empleados
         const { data: empleado, error: errEmp } = await supabase
             .from("empleados")
-            .select("puesto")
+            .select("puesto,id_empleado")
             .eq("id_usuario", usuario.id_usuario)
             .maybeSingle(); 
 
         if (empleado) {
             puestoEncontrado = empleado.puesto; 
-            console.log("Es empleado. Puesto detectado:", puestoEncontrado);
+            idEmpleadoEncontrado = empleado.id_empleado;
+            console.log("Es empleado. ID:", idEmpleadoEncontrado,"Es empleado. Puesto detectado:", puestoEncontrado);
         } else {
             console.log("Es empleado en 'usuarios' pero NO está en la tabla 'empleados'.");
         }
@@ -113,6 +115,7 @@ export const loginUsuario = async (req, res) => {
         email: usuario.email,
         rol: usuario.rol,
         puesto: puestoEncontrado, 
+        id_empleado: idEmpleadoEncontrado,
         telefono: datosCliente.telefono || null
       }
     });

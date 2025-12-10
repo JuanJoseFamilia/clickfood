@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, LogOut, Plus, Trash2, User, Loader, ClipboardList, Search, Calendar, MapPin } from 'lucide-react';
+// 1. IMPORTAMOS LA LIBRERÍA DE NOTIFICACIONES
+import { Toaster, toast } from 'react-hot-toast';
 
 const API_URL = 'http://localhost:5000'; 
 
@@ -28,6 +30,9 @@ export default function Mesero() {
   
   // OBTENER USUARIO LOGUEADO
   const usuario = JSON.parse(localStorage.getItem('usuario')) || null;
+
+  // REF PARA EVITAR NOTIFICACIONES REPETIDAS
+  const notificadosRef = useRef(new Set());
 
   // --- EFECTOS ---
   useEffect(() => {
@@ -64,6 +69,35 @@ export default function Mesero() {
         if(res.ok) {
             const data = await res.json();
             const lista = Array.isArray(data) ? data : [];
+
+            // --- 2. LOGICA DE NOTIFICACIONES ---
+            lista.forEach(pedido => {
+                // Si está completado, es mío, y NO te he avisado antes:
+                if (
+                    pedido.estado === 'Completado' && 
+                    pedido.id_empleado === usuario?.id_empleado && 
+                    !notificadosRef.current.has(pedido.id_pedido)
+                ) {
+                    // DISPARAR ALERTA
+                    toast.success(`✅ Orden #${pedido.id_pedido} (Mesa ${pedido.id_mesa}) lista para entregar`, {
+                        duration: 6000,
+                        position: 'top-center',
+                        style: {
+                            background: '#22c55e', // Verde éxito
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            border: '2px solid #fff',
+                            boxShadow: '0px 4px 12px rgba(0,0,0,0.5)'
+                        },
+                        icon: '🍽️',
+                    });
+
+                    // Marcar como notificado para que no suene otra vez en 5 segundos
+                    notificadosRef.current.add(pedido.id_pedido);
+                }
+            });
+            // -----------------------------------
+
             setPedidos(lista.slice(0, 4)); 
             setStats({
                 total: lista.length, 
@@ -162,7 +196,9 @@ export default function Mesero() {
         });
         
         if (res.ok) {
-            alert(`✅ ¡Orden enviada exitosamente!`);
+            // Usamos toast también para el éxito de envío en lugar de alert
+            toast.success(`✅ Orden enviada a cocina`, { position: 'bottom-center' });
+            
             setOrdenActual([]);
             setMesa('');
             setIdReserva('');
@@ -180,6 +216,9 @@ export default function Mesero() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans pb-10">
+       {/* 3. COMPONENTE TOASTER: Aquí es donde se renderizan las alertas */}
+       <Toaster />
+
        <header className="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-20 shadow-md">
             <div>
                 <h1 className="text-xl font-bold">Panel de Mesero</h1>
@@ -293,23 +332,22 @@ export default function Mesero() {
                        <div className="p-6 space-y-6">
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="flex gap-2">
-                                   <select 
-                                       value={productoSel}
-                                       onChange={e => setProductoSel(e.target.value)}
-                                       className="flex-1 bg-gray-900 border border-gray-600 rounded-lg p-3 text-white outline-none focus:border-orange-500"
-                                   >
-                                       <option value="">{cargandoMenu ? "Cargando..." : "-- Menú --"}</option>
-                                       {!cargandoMenu && Object.keys(menuCategorizado).map(cat => (
-                                           <optgroup key={cat} label={cat} className="bg-gray-800 text-orange-400 font-bold">
-                                               {menuCategorizado[cat].map(prod => (
-                                                   <option key={prod.id_producto || prod.id} value={prod.id_producto || prod.id} className="text-white font-normal bg-gray-900">
-                                                       {prod.nombre} - ${prod.precio}
-                                                   </option>
-                                               ))}
-                                           </optgroup>
-                                       ))}
+                                <select 
+                                        value={productoSel}
+                                        onChange={e => setProductoSel(e.target.value)}
+                                        className="w-full md:flex-1 bg-gray-900 border border-gray-600 rounded-lg p-3 text-white outline-none focus:border-orange-500">
+                                        <option value="">{cargandoMenu ? "Cargando..." : "-- Menú --"}</option>
+                                        {!cargandoMenu && Object.keys(menuCategorizado).map(cat => (
+                                            <optgroup key={cat} label={cat} className="bg-gray-800 text-orange-400 font-bold">
+                                                {menuCategorizado[cat].map(prod => (
+                                                    <option key={prod.id_producto || prod.id} value={prod.id_producto || prod.id} className="text-white font-normal bg-gray-900">
+                                                        {prod.nombre} - ${prod.precio}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        ))}
                                    </select>
-                                   <button onClick={agregarProducto} className="bg-gray-700 hover:bg-gray-600 text-white px-6 rounded-lg font-bold">Agregar</button>
+                                   <button onClick={agregarProducto} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-bold w-full md:w-auto">Agregar</button>
                                </div>
                            </div>
 
@@ -322,15 +360,15 @@ export default function Mesero() {
                                    <div className="text-center py-6 text-gray-500 text-sm italic">Agrega productos...</div>
                                ) : (
                                    <ul className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                                       {ordenActual.map((item, idx) => (
-                                           <li key={idx} className="flex justify-between items-center text-sm bg-gray-800 p-3 rounded mb-2">
-                                               <span>{item.nombre}</span>
-                                               <div className="flex items-center gap-3">
-                                                   <span className="text-gray-400">${item.precio}</span>
-                                                   <button onClick={() => eliminarItem(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={16}/></button>
-                                               </div>
-                                           </li>
-                                       ))}
+                                           {ordenActual.map((item, idx) => (
+                                               <li key={idx} className="flex justify-between items-center text-sm bg-gray-800 p-3 rounded mb-2">
+                                                   <span>{item.nombre}</span>
+                                                   <div className="flex items-center gap-3">
+                                                       <span className="text-gray-400">${item.precio}</span>
+                                                       <button onClick={() => eliminarItem(idx)} className="text-red-400 hover:text-red-300"><Trash2 size={16}/></button>
+                                                   </div>
+                                               </li>
+                                           ))}
                                    </ul>
                                )}
                            </div>

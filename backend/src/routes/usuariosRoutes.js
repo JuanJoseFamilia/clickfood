@@ -7,43 +7,12 @@ import {
   updateUsuario,
   deleteUsuario,
   registrarUsuario,
+  loginUsuario,
 } from '../controllers/usuarioController.js';
 
 const router = express.Router();
 
-router.post("/login", async (req, res) => {
-  try {
-    const { email, contraseña } = req.body;
-
-    const usuario = await Usuario.buscarPorEmail(email);
-
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
-    }
-
-
-    const hashGuardado = usuario.contraseña || usuario.password;
-    const passwordValido = await Usuario.verificarPassword(contraseña, hashGuardado);
-
-    if (!passwordValido) {
-      return res.status(401).json({ error: 'Contraseña incorrecta' });
-    }
-
-    const usuarioResponse = { ...usuario };
-    delete usuarioResponse.contraseña;
-    delete usuarioResponse.password;
-
-
-    res.json({
-      mensaje: 'Login exitoso',
-      usuario: usuarioResponse
-    });
-
-  } catch (error) {
-    console.error("Error en Login:", error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
+router.post("/login", loginUsuario);
 
 router.post("/register", registrarUsuario);
 
