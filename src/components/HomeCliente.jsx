@@ -12,7 +12,8 @@ import {
   BookOpen,
   History,
   Ban,
-  CheckCircle
+  CheckCircle,
+  Ticket // Importamos un icono de ticket para el ID
 } from "lucide-react";
 
 export default function HomeCliente() {
@@ -244,6 +245,10 @@ export default function HomeCliente() {
                             </span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
+                            {/* CAMBIO: MOSTRAR ID TAMBIEN EN LISTA */}
+                            <span className="font-mono bg-gray-200 text-gray-700 px-1.5 rounded text-xs">
+                              ID: #{res.id_reserva}
+                            </span>
                             <span className="text-gray-500">
                                 {res.mesas?.numero ? `Mesa ${res.mesas.numero}` : 'Mesa asignada al llegar'}
                             </span>
@@ -286,7 +291,7 @@ export default function HomeCliente() {
         </div>
       )}
 
-      {/* --- MODAL DEL MENÚ --- */}
+      {/* --- MODAL DEL MENÚ (SIN CAMBIOS) --- */}
       {showMenuModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
@@ -331,7 +336,7 @@ export default function HomeCliente() {
         </div>
       )}
 
-      {/* NAVBAR */}
+      {/* NAVBAR (SIN CAMBIOS) */}
       <nav className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
@@ -370,6 +375,7 @@ export default function HomeCliente() {
         )}
       </nav>
 
+      {/* HERO SECTION */}
       <div className="relative bg-gray-900 text-white overflow-hidden">
         <div className="absolute inset-0">
           <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop" alt="Restaurante" className="w-full h-full object-cover opacity-30" />
@@ -390,19 +396,44 @@ export default function HomeCliente() {
       {/* DASHBOARD CARDS */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10 pb-8 flex-grow">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card Próxima Reserva */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-orange-500 hover:-translate-y-1 transition-transform">
+          
+          {/* --- CAMBIO PRINCIPAL AQUÍ: TARJETA PRÓXIMA RESERVA --- */}
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-orange-500 hover:-translate-y-1 transition-transform relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-800">Próxima Reserva</h3>
               <div className="p-2 bg-orange-50 rounded-lg"><Clock className="text-orange-500" size={20} /></div>
             </div>
+            
             {nextReservation ? (
-              <div className="space-y-2">
-                <p className="text-orange-600 font-bold text-lg capitalize">{formatDate(nextReservation.fecha_hora)}</p>
-                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold">{nextReservation.estado}</span>
+              <div className="space-y-4">
+                {/* NOTIFICACIÓN VISUAL DEL ID */}
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 text-orange-600 mb-1">
+                        <Ticket size={16} />
+                        <span className="text-xs uppercase font-bold tracking-wider">Tu Código de Entrada</span>
+                    </div>
+                    
+                    {/* El ID Grande y Visible */}
+                    <div className="text-4xl font-black text-gray-900 my-2">
+                        #{nextReservation.id_reserva}
+                    </div>
+                    
+                    {/* El Mensaje solicitado */}
+                    <p className="text-xs text-orange-700 font-medium bg-white/50 py-1 px-2 rounded-full inline-block border border-orange-100">
+                        Entrega este Codigo al mesero
+                    </p>
+                </div>
+
+                <div className="pl-1 border-l-2 border-gray-200">
+                    <p className="text-gray-800 font-bold text-lg capitalize">{formatDate(nextReservation.fecha_hora)}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold uppercase">{nextReservation.estado}</span>
+                        {nextReservation.mesas && <span className="text-sm text-gray-500">Mesa {nextReservation.mesas.numero}</span>}
+                    </div>
+                </div>
               </div>
             ) : (
-              <p className="text-gray-500 text-sm italic">No tienes reservas activas.</p>
+              <p className="text-gray-500 text-sm italic py-4">No tienes reservas activas.</p>
             )}
           </div>
 
