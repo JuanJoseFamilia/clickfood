@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; 
@@ -23,7 +24,7 @@ export default function LoginPage() {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/usuarios/login", {
+      const res = await fetch(`${API_URL}/usuarios/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -34,7 +35,6 @@ export default function LoginPage() {
       if (res.ok) {
         setMensaje("¡Login exitoso! Redirigiendo...");
         
-        // Guardar usuario en localStorage
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
         
         console.log("DATOS RECIBIDOS DEL BACKEND:", data.usuario);

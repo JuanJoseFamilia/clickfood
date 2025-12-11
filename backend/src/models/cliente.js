@@ -8,6 +8,7 @@ class Cliente {
         id_cliente, id_usuario, telefono, direccion,
         usuarios ( nombre, email, rol )
       `)
+      .eq('activo', true)
       .order('id_cliente', { ascending: false });
 
     if (error) throw error;
@@ -67,10 +68,14 @@ class Cliente {
     return data;
   }
 
-  static async eliminar(id) {
-    const { error, count } = await supabase.from('clientes').delete().eq('id_cliente', id);
+static async eliminar(id) {
+    const { error } = await supabase
+      .from('clientes')
+      .update({ activo: false }) 
+      .eq('id_cliente', id);
+    
     if (error) throw error;
-    return count > 0;
+    return true; 
   }
 }
 

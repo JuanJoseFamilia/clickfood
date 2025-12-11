@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,7 +14,7 @@ import {
   History,
   Ban,
   CheckCircle,
-  Ticket // Importamos un icono de ticket para el ID
+  Ticket 
 } from "lucide-react";
 
 export default function HomeCliente() {
@@ -34,8 +35,6 @@ export default function HomeCliente() {
   
   const [menuCategorizado, setMenuCategorizado] = useState({});
   const [filterLimit, setFilterLimit] = useState(5); 
-
-  const API_URL = "http://localhost:5000";
 
   useEffect(() => {
     const storedUser = localStorage.getItem("usuario");
@@ -124,7 +123,7 @@ export default function HomeCliente() {
       });
 
       if (res.ok) {
-        alert("✅ Reserva confirmada exitosamente.");
+        alert("Reserva confirmada exitosamente.");
         fetchData(usuario.id_usuario); 
       } else {
         alert("No se pudo confirmar la reserva.");
@@ -171,7 +170,6 @@ export default function HomeCliente() {
     return date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   };
 
-  // Función para asignar color al estado
   const getStatusColor = (estado) => {
       const st = estado ? estado.toUpperCase() : '';
       if (st === 'PENDIENTE') return 'bg-orange-100 text-orange-700';
@@ -245,7 +243,6 @@ export default function HomeCliente() {
                             </span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            {/* CAMBIO: MOSTRAR ID TAMBIEN EN LISTA */}
                             <span className="font-mono bg-gray-200 text-gray-700 px-1.5 rounded text-xs">
                               ID: #{res.id_reserva}
                             </span>
@@ -291,7 +288,7 @@ export default function HomeCliente() {
         </div>
       )}
 
-      {/* --- MODAL DEL MENÚ (SIN CAMBIOS) --- */}
+      {/* --- MODAL DEL MENÚ--- */}
       {showMenuModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
@@ -336,7 +333,7 @@ export default function HomeCliente() {
         </div>
       )}
 
-      {/* NAVBAR (SIN CAMBIOS) */}
+      {/* NAVBAR*/}
       <nav className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
@@ -375,7 +372,6 @@ export default function HomeCliente() {
         )}
       </nav>
 
-      {/* HERO SECTION */}
       <div className="relative bg-gray-900 text-white overflow-hidden">
         <div className="absolute inset-0">
           <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop" alt="Restaurante" className="w-full h-full object-cover opacity-30" />
@@ -397,7 +393,6 @@ export default function HomeCliente() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10 pb-8 flex-grow">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          {/* --- CAMBIO PRINCIPAL AQUÍ: TARJETA PRÓXIMA RESERVA --- */}
           <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-orange-500 hover:-translate-y-1 transition-transform relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-800">Próxima Reserva</h3>
@@ -413,7 +408,6 @@ export default function HomeCliente() {
                         <span className="text-xs uppercase font-bold tracking-wider">Tu Código de Entrada</span>
                     </div>
                     
-                    {/* El ID Grande y Visible */}
                     <div className="text-4xl font-black text-gray-900 my-2">
                         #{nextReservation.id_reserva}
                     </div>

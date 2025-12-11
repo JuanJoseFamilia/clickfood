@@ -83,9 +83,15 @@ static async obtenerTodas() {
     }
 
     static async eliminar(id) {
-        const { error, count } = await supabase.from('reservas').delete().eq('id_reserva', id);
+        const { data, error } = await supabase
+            .from('reservas')
+            .delete()
+            .eq('id_reserva', id)
+            .select();
+    
         if (error) throw error;
-        return count > 0; 
+    
+        return data && data.length > 0;
     }
 
     static async verificarDisponibilidad(id_mesa, fecha_hora) {

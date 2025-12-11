@@ -1,11 +1,16 @@
+import { API_URL } from '../config';
 import '../styles/index.css';
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Phone, MapPin } from 'lucide-react';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
+  
+  const [telefono, setTelefono] = useState('');
+  const [direccion, setDireccion] = useState('');
+
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
@@ -16,11 +21,13 @@ export default function RegisterPage() {
       nombre: username,
       email: registerEmail,
       contraseña: registerPassword,
+      telefono: telefono,   
+      direccion: direccion, 
       rol: "cliente"
     };
 
     try {
-      const res = await fetch("http://localhost:5000/usuarios/register", {
+      const res = await fetch(`${ API_URL }/usuarios/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -29,10 +36,12 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setMensaje("Registro exitoso, ya puedes iniciar sesion.");
+        setMensaje("Registro exitoso, ya puedes iniciar sesión.");
         setUsername('');
         setRegisterEmail('');
         setRegisterPassword('');
+        setTelefono('');
+        setDireccion('');
       } else {
         setMensaje(`${data.error}`);
       }
@@ -46,7 +55,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="flex bg-gray-800 rounded-xl shadow-2xl overflow-hidden w-full max-w-4xl">
 
-        <div className="w-1/2 bg-orange-500 flex items-center justify-center p-12">
+        <div className="w-1/2 bg-orange-500 flex items-center justify-center p-12 hidden md:flex">
           <div className="text-center">
             <div className="text-7xl font-bold text-white mb-4">Click</div>
             <div className="text-7xl font-bold text-white">Food</div>
@@ -54,17 +63,17 @@ export default function RegisterPage() {
           </div>
         </div>
 
-
-        <div className="w-1/2 flex flex-col items-center justify-center px-16 py-12">
+        <div className="w-full md:w-1/2 flex flex-col items-center justify-center px-8 sm:px-16 py-12">
           <div className="w-full">
  
-            <div className="mb-12">
+            <div className="mb-8">
               <div className="text-sm text-gray-300 mb-2">¡Bienvenido!</div>
-              <h1 className="text-4xl font-bold text-white">Crear cuenta</h1>
+              <h1 className="text-3xl font-bold text-white">Crear cuenta</h1>
             </div>
 
             <form onSubmit={handleRegister} className="w-full">
 
+              {/* CAMPO USUARIO */}
               <div className="relative mb-4">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,13 +84,13 @@ export default function RegisterPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Tu usuario"
-                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="Nombre completo"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 />
               </div>
 
-
+              {/* CAMPO EMAIL */}
               <div className="relative mb-4">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,12 +102,42 @@ export default function RegisterPage() {
                   value={registerEmail}
                   onChange={(e) => setRegisterEmail(e.target.value)}
                   placeholder="tu@correo.com"
-                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                />
+              </div>
+              
+              {/* CAMPO TELEFONO */}
+              <div className="relative mb-4">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <Phone size={20} />
+                </div>
+                <input
+                  type="tel"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  placeholder="Teléfono"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 />
               </div>
 
+              {/* CAMPO DIRECCION */}
+              <div className="relative mb-4">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <MapPin size={20} />
+                </div>
+                <input
+                  type="text"
+                  value={direccion}
+                  onChange={(e) => setDireccion(e.target.value)}
+                  placeholder="Dirección"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                />
+              </div>
 
+              {/* CAMPO PASSWORD */}
               <div className="relative mb-6">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,8 +148,8 @@ export default function RegisterPage() {
                   type={showRegisterPassword ? 'text' : 'password'}
                   value={registerPassword}
                   onChange={(e) => setRegisterPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-12 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="Contraseña"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 pl-12 pr-12 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 />
                 <button
@@ -122,7 +161,6 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-
               <button
                 type="submit"
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-4 rounded-lg transition duration-200"
@@ -130,14 +168,12 @@ export default function RegisterPage() {
                 Crear cuenta
               </button>
 
-
               {mensaje && (
-                <p className="mt-4 text-center text-white">
+                <p className={`mt-4 text-center ${mensaje.includes('exitoso') ? 'text-green-400' : 'text-red-400'}`}>
                   {mensaje}
                 </p>
               )}
             </form>
-
 
             <div className="mt-8 text-center">
               <p className="text-gray-300">
@@ -146,7 +182,7 @@ export default function RegisterPage() {
                   onClick={() => window.location.href = '/'}
                   className="text-orange-500 hover:text-orange-400 font-semibold transition bg-none border-none cursor-pointer"
                 >
-                  Inicia sesión aqui
+                  Inicia sesión aquí
                 </button>
               </p>
             </div>

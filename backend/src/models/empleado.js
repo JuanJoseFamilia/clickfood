@@ -10,7 +10,9 @@ class Empleado {
                 puesto,
                 salario,
                 usuarios (nombre, email, rol)
-            `);
+            `)
+            .eq('activo', true)
+            .order('id_empleado', { ascending: false });
 
         if (error) {
             console.error('Error al obtener todos los empleados:', error);
@@ -95,10 +97,14 @@ const { id_usuario, puesto, salario } = datos;
     }
 
     static async eliminar(id) {
-        const { error, count } = await supabase.from('empleados').delete().eq('id_empleado', id);
+        const { error } = await supabase
+          .from('empleados')
+          .update({ activo: false }) 
+          .eq('id_empleado', id);
+
         if (error) throw error;
-        return count > 0;
-    }
+        return true;
+      }
 }
 
 export default Empleado;

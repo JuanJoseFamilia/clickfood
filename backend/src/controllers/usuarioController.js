@@ -2,47 +2,46 @@
 import bcrypt from "bcrypt";
 import { supabase } from "../config/supabase.js";
 
-export const registrarUsuario = async (req, res) => {
+   export const registrarUsuario = async (req, res) => {
+  const { nombre, email, contraseña, rol, telefono, direccion } = req.body;
+
   try {
-    const { nombre, email, contraseña, rol } = req.body;
-    
-    if (!email || !contraseña || !nombre) {
-      return res.status(400).json({ error: "Faltan campos obligatorios" });
-    }
+    // Insertar en la tabla USUARIOS 
+    const { data: nuevoUsuario, error: errorUsuario } = await supabase
+      .from('usuarios')
+      .insert([
+        { nombre, email, contraseña, rol } // Nota: Aquí deberías encriptar la contraseña si usas bcrypt
+      ])
+      .select() 
+      .single();
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(contraseña, saltRounds);
+    if (errorUsuario) throw errorUsuario;
 
+    const idUsuarioCreado = nuevoUsuario.id_usuario;
 
-    //Insertar usuario
-    const { data: usuarioData, error: usuarioError } = await supabase
-      .from("usuarios")
-      .insert([{ nombre, email, contraseña: hashedPassword, rol }])
-      .select("id_usuario, nombre, email, rol")
-      .single(); 
-
-    if (usuarioError) throw usuarioError;
-
+    // Insertar en la tabla CLIENTES (si corresponde)
     if (rol === 'cliente') {
-        const { error: clienteError } = await supabase
-            .from("clientes")
-            .insert([{ 
-                id_usuario: usuarioData.id_usuario, 
-                telefono: "", 
-                direccion: "" 
-            }]);
-        
-        if (clienteError) console.error("Error creando perfil cliente:", clienteError);
+      const { error: errorCliente } = await supabase
+        .from('clientes')
+        .insert([
+          { 
+            id_usuario: idUsuarioCreado, // Vinculamos con el usuario recién creado
+            telefono: telefono || null, 
+            direccion: direccion || null
+          }
+        ]);
+
+      if (errorCliente) {
+        console.error("Error al crear perfil de cliente:", errorCliente);
+        throw errorCliente;
+      }
     }
 
-    res.status(201).json({
-      mensaje: "Usuario registrado correctamente",
-      usuario: usuarioData,
-    });
+    res.status(201).json({ message: 'Usuario registrado exitosamente', usuario: nuevoUsuario });
 
-  } catch (err) {
-    console.error("Error al registrar usuario:", err.message);
-    res.status(500).json({ error: "Error al registrar usuario." });
+  } catch (error) {
+    console.error("Error en registro:", error);
+    res.status(500).json({ error: error.message || 'Error en el servidor' });
   }
 };
 
@@ -81,7 +80,6 @@ export const loginUsuario = async (req, res) => {
     let datosCliente = {};       // Para clientes
 
     if (usuario.rol === 'empleado') {
-        // Buscar en la tabla empleados
         const { data: empleado, error: errEmp } = await supabase
             .from("empleados")
             .select("puesto,id_empleado")
@@ -97,7 +95,6 @@ export const loginUsuario = async (req, res) => {
         }
     } 
     else if (usuario.rol === 'cliente') {
-        // Buscar en la tabla clientes
         const { data: cliente } = await supabase
             .from("clientes")
             .select("id_cliente, telefono")

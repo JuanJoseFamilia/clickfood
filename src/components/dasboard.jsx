@@ -1,7 +1,8 @@
+import { API_URL } from '../config';
 import { BarChart, Bar, XAxis, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Tooltip, YAxis, CartesianGrid} from 'recharts';
-import { FileText, DollarSign, Users, CreditCard, Plus, AlertTriangle,LogOut, Search, Edit2, Trash2, X, Save, Package, Bookmark, BrainCircuit, RefreshCw, Calendar, Clock, TrendingUp, Activity, Sun, Snowflake, CloudSun, Leaf } from 'lucide-react';
+import { FileText, DollarSign, Users, CreditCard, Plus, AlertTriangle, LogOut, Search, Edit2, Trash2, X, Save, Package, Bookmark, BrainCircuit, RefreshCw, Calendar, Clock, TrendingUp, Activity, Sun, Snowflake, CloudSun, Leaf } from 'lucide-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import {Menu } from 'lucide-react'; 
+import { Menu } from 'lucide-react'; 
 import { usePredictions } from '../hooks/usePredictions';
 
 // --- HELPER FUNCTIONS ---
@@ -45,9 +46,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
   const [idCliente, setIdCliente] = useState('');
   const [idEmpleado, setIdEmpleado] = useState(''); 
   const [selectedMesaNumero, setSelectedMesaNumero] = useState('');
-  
-  // Visualmente mostramos "Pendiente"
-  const [estado, setEstado] = useState('Pendiente');
+
 
   const [selectedProductoId, setSelectedProductoId] = useState('');
   const [cantidad, setCantidad] = useState(1);
@@ -57,10 +56,10 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
     const loadData = async () => {
       try {
         const [resCli, resEmp, resProd, resMesas] = await Promise.all([
-          fetch('http://localhost:5000/clientes'),
-          fetch('http://localhost:5000/empleados'),
-          fetch('http://localhost:5000/productos'),
-          fetch('http://localhost:5000/mesas')
+          fetch(`${API_URL}/clientes`),
+          fetch(`${API_URL}/empleados`),
+          fetch(`${API_URL}/productos`),
+          fetch(`${API_URL}/mesas`)
         ]);
 
         if(resCli.ok) setClientes(await resCli.json());
@@ -69,7 +68,6 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
         
         if(resProd.ok) {
             const allProds = await resProd.json();
-            // Filtramos productos activos y con stock
             const disponibles = allProds.filter(p => (parseInt(p.stock) || 0) > 0 && (!p.estado || String(p.estado).toLowerCase() !== 'inactivo'));
             setProductos(disponibles);
         }
@@ -107,24 +105,10 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
   const totalGeneral = cart.reduce((acc, item) => acc + item.subtotal, 0);
 
   const handleSaveOrder = async () => {
-    // VALIDACIONES
-    if (!idCliente) {
-        alert("Por favor seleccione un Cliente.");
-        return;
-    }
-    if (!idEmpleado) {
-        alert("Por favor seleccione el Empleado que atiende.");
-        return;
-    }
-    if (!selectedMesaNumero) {
-        alert("Por favor seleccione una Mesa.");
-        return;
-    }
-    if (cart.length === 0) {
-      alert("Por favor agregue al menos un producto.");
-      return;
-    }
-
+    if (!idCliente) return alert("Por favor seleccione un Cliente.");
+    if (!idEmpleado) return alert("Por favor seleccione el Empleado que atiende.");
+    if (!selectedMesaNumero) return alert("Por favor seleccione una Mesa.");
+    if (cart.length === 0) return alert("Por favor agregue al menos un producto.");
 
     const payload = {
       id_mesa: selectedMesaNumero, 
@@ -140,7 +124,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/pedidos', {
+      const response = await fetch(`${API_URL}/pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -164,7 +148,6 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full flex flex-col max-h-[90vh]">
-        {/* HEADER */}
         <div className="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <Package className="text-orange-500" /> Nuevo Pedido
@@ -172,11 +155,8 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
           <button onClick={onClose}><X className="text-gray-400 hover:text-gray-600" /></button>
         </div>
 
-        {/* BODY */}
         <div className="p-6 overflow-y-auto flex-1">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            
-            {/*SELECTOR DE CLIENTE */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cliente <span className='text-red-500'>*</span></label>
               <select className="w-full border border-gray-300 rounded-lg p-2" value={idCliente} onChange={e => setIdCliente(e.target.value)}>
@@ -188,15 +168,9 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
                 ))}
               </select>
             </div>
-
-            {/* SELECTOR DE EMPLEADO*/}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Empleado <span className='text-red-500'>*</span></label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg p-2" 
-                value={idEmpleado} 
-                onChange={e => setIdEmpleado(e.target.value)}
-              >
+              <select className="w-full border border-gray-300 rounded-lg p-2" value={idEmpleado} onChange={e => setIdEmpleado(e.target.value)}>
                 <option value="">Seleccione Empleado...</option>
                 {empleados.map(e => (
                   <option key={e.id_empleado} value={e.id_empleado}>
@@ -205,15 +179,9 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
                 ))}
               </select>
             </div>
-
-            {/*SELECTOR DE MESA */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Mesa <span className='text-red-500'>*</span></label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg p-2" 
-                value={selectedMesaNumero} 
-                onChange={e => setSelectedMesaNumero(e.target.value)}
-              >
+              <select className="w-full border border-gray-300 rounded-lg p-2" value={selectedMesaNumero} onChange={e => setSelectedMesaNumero(e.target.value)}>
                 <option value="">Seleccione Mesa...</option>
                 {mesas.map(m => (
                   <option key={m.id_mesa} value={m.numero}>
@@ -222,7 +190,6 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
                 ))}
               </select>
             </div>
-
           </div>
 
           <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2"><Plus size={16} /> Agregar Productos</h3>
@@ -230,11 +197,7 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
           <div className="flex flex-col md:flex-row gap-3 items-end mb-6 border-b pb-6">
             <div className="flex-1 w-full">
               <label className="block text-xs font-bold text-gray-500 mb-1">Producto</label>
-              <select
-                className="w-full border border-gray-300 rounded-lg p-2"
-                value={selectedProductoId}
-                onChange={e => setSelectedProductoId(e.target.value)}
-              >
+              <select className="w-full border border-gray-300 rounded-lg p-2" value={selectedProductoId} onChange={e => setSelectedProductoId(e.target.value)}>
                 <option value="">-- Seleccionar producto --</option>
                 {productos.map(p => (
                   <option key={p.id_producto} value={p.id_producto}>
@@ -245,18 +208,9 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
             </div>
             <div className="w-24">
               <label className="block text-xs font-bold text-gray-500 mb-1">Cantidad</label>
-              <input
-                type="number"
-                min="1"
-                className="w-full border border-gray-300 rounded-lg p-2 text-center"
-                value={cantidad}
-                onChange={e => setCantidad(e.target.value)}
-              />
+              <input type="number" min="1" className="w-full border border-gray-300 rounded-lg p-2 text-center" value={cantidad} onChange={e => setCantidad(e.target.value)} />
             </div>
-            <button
-              onClick={handleAddProduct}
-              className="bg-emerald-500 text-white px-6 py-2 rounded-lg hover:bg-emerald-600 flex items-center gap-2 transition-colors"
-            >
+            <button onClick={handleAddProduct} className="bg-emerald-500 text-white px-6 py-2 rounded-lg hover:bg-emerald-600 flex items-center gap-2 transition-colors">
               <Plus size={18} /> Agregar
             </button>
           </div>
@@ -295,17 +249,13 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
           </div>
         </div>
 
-        {/* FOOTER */}
         <div className="p-6 border-t bg-gray-50 flex justify-between items-center rounded-b-lg">
           <div className="text-2xl font-bold text-gray-800">
             Total: <span className="text-orange-500">${totalGeneral}</span>
           </div>
           <div className="flex gap-3">
             <button onClick={onClose} className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white transition-colors">Cancelar</button>
-            <button
-              onClick={handleSaveOrder}
-              className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium flex items-center gap-2 shadow-lg shadow-orange-500/30"
-            >
+            <button onClick={handleSaveOrder} className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium flex items-center gap-2 shadow-lg shadow-orange-500/30">
               <Save size={18} /> Guardar Pedido
             </button>
           </div>
@@ -318,7 +268,6 @@ function NewOrderModal({ onClose, onSaveSuccess }) {
 function NewReservaModal({ onClose, onSaveSuccess }) {
   const [clientes, setClientes] = useState([]);
   const [mesas, setMesas] = useState([]);
-
   const [idCliente, setIdCliente] = useState('');
   const [idMesa, setIdMesa] = useState('');
   const [fechaHora, setFechaHora] = useState('');
@@ -328,8 +277,8 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
     const loadData = async () => {
       try {
         const [resCli, resMesas] = await Promise.all([
-          fetch('http://localhost:5000/clientes'),
-          fetch('http://localhost:5000/mesas')
+          fetch(`${API_URL}/clientes`),
+          fetch(`${API_URL}/mesas`)
         ]);
         setClientes(await resCli.json());
         setMesas(await resMesas.json());
@@ -341,10 +290,7 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
   }, []);
 
   const handleSave = async () => {
-    if (!idCliente || !idMesa || !fechaHora) {
-      alert("Por favor complete todos los campos (Cliente, Mesa, Fecha).");
-      return;
-    }
+    if (!idCliente || !idMesa || !fechaHora) return alert("Por favor complete todos los campos (Cliente, Mesa, Fecha).");
 
     const payload = {
       id_cliente: idCliente,
@@ -354,7 +300,7 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/reservas', {
+      const response = await fetch(`${API_URL}/reservas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -383,7 +329,6 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
         </div>
-
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
@@ -409,12 +354,7 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha y Hora</label>
-            <input
-              type="datetime-local"
-              className="w-full border rounded-lg p-2"
-              value={fechaHora}
-              onChange={e => setFechaHora(e.target.value)}
-            />
+            <input type="datetime-local" className="w-full border rounded-lg p-2" value={fechaHora} onChange={e => setFechaHora(e.target.value)} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
@@ -425,7 +365,6 @@ function NewReservaModal({ onClose, onSaveSuccess }) {
             </select>
           </div>
         </div>
-
         <div className="flex gap-3 p-6 border-t bg-gray-50 rounded-b-lg">
           <button onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg hover:bg-white transition">Cancelar</button>
           <button onClick={handleSave} className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">Guardar</button>
@@ -444,7 +383,7 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
   useEffect(() => {
     const loadUsuarios = async () => {
       try {
-        const response = await fetch('http://localhost:5000/usuarios');
+        const response = await fetch(`${API_URL}/usuarios`);
         if (response.ok) {
           const data = await response.json();
           setUsuarios(data);
@@ -457,19 +396,13 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
   }, []);
 
   const handleSave = async () => {
-    if (!idUsuario || !telefono || !direccion) {
-      return alert("Por favor complete todos los campos.");
-    }
+    if (!idUsuario || !telefono || !direccion) return alert("Por favor complete todos los campos.");
 
     try {
-      const response = await fetch('http://localhost:5000/clientes', {
+      const response = await fetch(`${API_URL}/clientes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_usuario: idUsuario,
-          telefono,
-          direccion
-        })
+        body: JSON.stringify({ id_usuario: idUsuario, telefono, direccion })
       });
 
       if (!response.ok) {
@@ -494,15 +427,10 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
         </div>
-
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-            <select
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500"
-              value={idUsuario}
-              onChange={e => setIdUsuario(e.target.value)}
-            >
+            <select className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500" value={idUsuario} onChange={e => setIdUsuario(e.target.value)}>
               <option value="">Seleccione un usuario...</option>
               {usuarios.map(u => (
                 <option key={u.id_usuario} value={u.id_usuario}>
@@ -513,26 +441,13 @@ function NewClienteModal({ onClose, onSaveSuccess }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-            <input
-              type="text"
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500"
-              value={telefono}
-              onChange={e => setTelefono(e.target.value)}
-              placeholder="Ej: 809-555-5555"
-            />
+            <input type="text" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="Ej: 809-555-5555" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-            <input
-              type="text"
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500"
-              value={direccion}
-              onChange={e => setDireccion(e.target.value)}
-              placeholder="Ej: Calle Principal #123"
-            />
+            <input type="text" className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500" value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Ej: Calle Principal #123" />
           </div>
         </div>
-
         <div className="flex gap-3 p-6 border-t bg-gray-50 rounded-b-lg">
           <button onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg hover:bg-white transition">Cancelar</button>
           <button onClick={handleSave} className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">Guardar</button>
@@ -554,20 +469,17 @@ function NewEmpleadoModal({ onClose, onSaveSuccess }) {
       try {
         setLoading(true);
         const [resUsuarios, resEmpleados] = await Promise.all([
-          fetch('http://localhost:5000/usuarios'),
-          fetch('http://localhost:5000/empleados')
+          fetch(`${API_URL}/usuarios`),
+          fetch(`${API_URL}/empleados`)
         ]);
 
         if (resUsuarios.ok && resEmpleados.ok) {
           const todosLosUsuarios = await resUsuarios.json();
           const empleadosExistentes = await resEmpleados.json();
-
           const idsDeEmpleados = empleadosExistentes.map(emp => emp.id_usuario);
-
           const disponibles = todosLosUsuarios.filter(u => 
             u.rol === 'empleado' && !idsDeEmpleados.includes(u.id_usuario)
           );
-
           setUsuariosDisponibles(disponibles);
         }
       } catch (error) {
@@ -580,27 +492,17 @@ function NewEmpleadoModal({ onClose, onSaveSuccess }) {
   }, []);
 
   const handleSave = async () => {
-    if (!idUsuario || !puesto || !salario) {
-      alert("Por favor complete todos los campos.");
-      return;
-    }
+    if (!idUsuario || !puesto || !salario) return alert("Por favor complete todos los campos.");
 
     try {
-      const response = await fetch('http://localhost:5000/empleados', {
+      const response = await fetch(`${API_URL}/empleados`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_usuario: idUsuario,
-          puesto: puesto,
-          salario: salario
-        })
+        body: JSON.stringify({ id_usuario: idUsuario, puesto: puesto, salario: salario })
       });
 
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Error al guardar");
-      }
+      if (!response.ok) throw new Error(result.message || "Error al guardar");
 
       alert("Empleado registrado exitosamente");
       if (onSaveSuccess) onSaveSuccess();
@@ -619,72 +521,32 @@ function NewEmpleadoModal({ onClose, onSaveSuccess }) {
           </h2>
           <button onClick={onClose}><X size={24} className="text-gray-400 hover:text-gray-600" /></button>
         </div>
-
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Seleccionar Usuario (Pendiente de registrar)
-            </label>
-            <select
-              className="w-full border rounded-lg p-2"
-              value={idUsuario}
-              onChange={e => setIdUsuario(e.target.value)}
-              disabled={loading}
-            >
-              <option value="">
-                {loading ? "Cargando..." : "-- Seleccione un usuario --"}
-              </option>
-              
+            <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Usuario</label>
+            <select className="w-full border rounded-lg p-2" value={idUsuario} onChange={e => setIdUsuario(e.target.value)} disabled={loading}>
+              <option value="">{loading ? "Cargando..." : "-- Seleccione un usuario --"}</option>
               {!loading && usuariosDisponibles.length === 0 ? (
-                 <option disabled>No hay usuarios disponibles (todos ya son empleados)</option>
+                 <option disabled>No hay usuarios disponibles</option>
               ) : (
                 usuariosDisponibles.map(u => (
-                  <option key={u.id_usuario} value={u.id_usuario}>
-                    {u.nombre} ({u.email})
-                  </option>
+                  <option key={u.id_usuario} value={u.id_usuario}>{u.nombre} ({u.email})</option>
                 ))
               )}
             </select>
-            {!loading && usuariosDisponibles.length === 0 && (
-                <p className="text-xs text-orange-500 mt-2">
-                    Todos los usuarios con rol 'empleado' ya están registrados. 
-                    Crea un nuevo usuario o cambia el rol de uno existente en "Gestión de Usuarios".
-                </p>
-            )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Puesto</label>
-            <input
-              type="text"
-              className="w-full border rounded-lg p-2"
-              placeholder="Ej: Chef, Mesero..."
-              value={puesto}
-              onChange={e => setPuesto(e.target.value)}
-            />
+            <input type="text" className="w-full border rounded-lg p-2" placeholder="Ej: Chef, Mesero..." value={puesto} onChange={e => setPuesto(e.target.value)} />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Salario</label>
-            <input
-              type="number"
-              className="w-full border rounded-lg p-2"
-              placeholder="0.00"
-              value={salario}
-              onChange={e => setSalario(e.target.value)}
-            />
+            <input type="number" className="w-full border rounded-lg p-2" placeholder="0.00" value={salario} onChange={e => setSalario(e.target.value)} />
           </div>
         </div>
-
         <div className="flex gap-3 p-6 border-t bg-gray-50 rounded-b-lg">
           <button onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg hover:bg-white">Cancelar</button>
-          <button 
-            onClick={handleSave} 
-            disabled={usuariosDisponibles.length === 0}
-            className={`flex-1 px-4 py-2 text-white rounded-lg transition ${usuariosDisponibles.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}
-          >
-            Guardar
-          </button>
+          <button onClick={handleSave} disabled={usuariosDisponibles.length === 0} className={`flex-1 px-4 py-2 text-white rounded-lg transition ${usuariosDisponibles.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}>Guardar</button>
         </div>
       </div>
     </div>
@@ -696,7 +558,7 @@ function OrderDetailsModal({ pedido, onClose }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/pedidos/${pedido.id_pedido}/detalle`)
+    fetch(`${API_URL}/pedidos/${pedido.id_pedido}/detalle`)
       .then(res => {
         if (!res.ok) throw new Error("Error fetching details");
         return res.json();
@@ -721,7 +583,6 @@ function OrderDetailsModal({ pedido, onClose }) {
           </div>
           <button onClick={onClose} className="hover:bg-orange-600 p-1 rounded"><X size={20} /></button>
         </div>
-
         <div className="p-6 overflow-y-auto">
           <div className="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
             <div>
@@ -733,7 +594,6 @@ function OrderDetailsModal({ pedido, onClose }) {
               <p className="text-gray-800 font-medium">{pedido.nombre_empleado || 'No asignado'}</p>
             </div>
           </div>
-
           <h4 className="font-semibold text-gray-700 mb-3">Productos del Pedido</h4>
           <table className="w-full text-sm mb-4">
             <thead className="bg-gray-100 border-b text-gray-600">
@@ -762,11 +622,8 @@ function OrderDetailsModal({ pedido, onClose }) {
             </tbody>
           </table>
         </div>
-
         <div className="p-4 bg-gray-50 border-t flex justify-between items-center shrink-0">
-          <span className={`px-3 py-1 rounded-full text-xs font-bold ${pedido.estado === 'Completado' ? 'bg-green-100 text-green-700' :
-            pedido.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-            }`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${pedido.estado === 'Completado' ? 'bg-green-100 text-green-700' : pedido.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
             {pedido.estado}
           </span>
           <div className="text-xl font-bold text-gray-800">
@@ -778,7 +635,7 @@ function OrderDetailsModal({ pedido, onClose }) {
   );
 }
 
-// --- CRUD GENERICO ---
+// --- CRUD GENERICO---
 function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails, customAction }) {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -798,7 +655,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/${endpoint}`);
+      const response = await fetch(`${API_URL}/${endpoint}`);
       if (!response.ok) throw new Error(`Error al cargar ${title.toLowerCase()}`);
       setItems(await response.json());
     } catch (error) {
@@ -851,7 +708,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
     const isUpdating = !!currentItem;
     const idKey = getIdKey();
     const idValue = currentItem ? currentItem[idKey] : null;
-    const url = isUpdating ? `http://localhost:5000/${endpoint}/${idValue}` : `http://localhost:5000/${endpoint}`;
+    const url = isUpdating ?(`${API_URL}/${endpoint}/${idValue}`) : (`${API_URL}/${endpoint}`);
     const method = isUpdating ? 'PUT' : 'POST';
     let dataToSend = { ...formData };
     if (!isUpdating) delete dataToSend[idKey];
@@ -884,10 +741,15 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
     if (!currentItem) return;
     const idValue = currentItem[getIdKey()];
     try {
-      const response = await fetch(`http://localhost:5000/${endpoint}/${idValue}`, { method: 'DELETE' });
-      if (!response.ok && response.status !== 204) throw new Error('Error al eliminar');
+      const response = await fetch(`${API_URL}/${endpoint}/${idValue}`, { method: 'DELETE' });
+      
+      if (!response.ok) { 
+          const data = await response.json().catch(() => ({})); 
+          throw new Error(data.message || 'Error al eliminar');
+      }
+      
       setShowDeleteModal(false);
-      fetchItems();
+      fetchItems(); 
       try { if (endpoint === 'pedidos') window.dispatchEvent(new Event('dashboard:refresh')); } catch (e) { }
     } catch (error) {
       alert(`Error: ${error.message}`);
@@ -1033,7 +895,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
                     type='password'
                     name='contraseña'
                     value={formData['contraseña'] || ''}
-                    onChange={(e) => setFormData({ ...formData, ['contraseña']: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, contraseña: e.target.value })} 
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                     placeholder={currentItem ? 'Nueva contraseña' : 'Ingrese contraseña'}
                     required={!currentItem}
@@ -1079,7 +941,7 @@ function CRUDModal({ title, icon: Icon, endpoint, onClose, fields, onViewDetails
   );
 }
 
-// --- CONFIGURACIÓN DE MODALES ESPECÍFICOS ---
+
 
 function ProductCRUDModal({ onClose }) {
   return <CRUDModal title="Productos" icon={Package} endpoint="productos" onClose={onClose} fields={['nombre', 'categoria', 'precio', 'stock', 'estado']} />;
@@ -1198,7 +1060,7 @@ function EmpleadoCRUDModal({ onClose }) {
   );
 }
 
-// --- COMPONENTE PRINCIPAL APP ---
+
 
 function App() {
   const { obtenerPrediccionSemanal, entrenarModelo, loading: aiLoading } = usePredictions();
@@ -1221,7 +1083,6 @@ function App() {
   const [showEmpleadoCRUD, setShowEmpleadoCRUD] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Estados para datos reales del dashboard
   const [estadisticas, setEstadisticas] = useState({
     pedidosDelDia: 0,
     ingresosHoy: 0,
@@ -1328,63 +1189,41 @@ function App() {
 
   const handleLogout = () => { window.location.href = '/'; };
 
-  // Función para cargar datos reales del dashboard
   const cargarDatosDashboard = useCallback(async () => {
     try {
-      // Cargar estadísticas principales
-      const resEstadisticas = await fetch('http://localhost:5000/dashboard/estadisticas');
-      if (resEstadisticas.ok) {
-        setEstadisticas(await resEstadisticas.json());
-      }
+      const resEstadisticas = await fetch(`${API_URL}/dashboard/estadisticas`);
+      if (resEstadisticas.ok) setEstadisticas(await resEstadisticas.json());
 
-      // Cargar ventas diarias
-      const resVentas = await fetch('http://localhost:5000/dashboard/ventas-diarias');
-      if (resVentas.ok) {
-        setDailySalesData(await resVentas.json());
-      }
+      const resVentas = await fetch(`${API_URL}/dashboard/ventas-diarias`);
+      if (resVentas.ok) setDailySalesData(await resVentas.json());
 
-      // Cargar categorías más vendidas
-      const resCategorias = await fetch('http://localhost:5000/dashboard/categorias-mas-vendidas');
-      if (resCategorias.ok) {
-        setCategoryData(await resCategorias.json());
-      }
+      const resCategorias = await fetch(`${API_URL}/dashboard/categorias-mas-vendidas`);
+      if (resCategorias.ok) setCategoryData(await resCategorias.json());
 
-      // Cargar próximas reservas
-      const resReservas = await fetch('http://localhost:5000/dashboard/proximas-reservas');
-      if (resReservas.ok) {
-        setProximasReservas(await resReservas.json());
-      }
+      const resReservas = await fetch(`${API_URL}/dashboard/proximas-reservas`);
+      if (resReservas.ok) setProximasReservas(await resReservas.json());
 
-      // Cargar productos más vendidos
-      const resProductos = await fetch('http://localhost:5000/dashboard/productos-mas-vendidos');
-      if (resProductos.ok) {
-        setProductosMasVendidos(await resProductos.json());
-      }
+      const resProductos = await fetch(`${API_URL}/dashboard/productos-mas-vendidos`);
+      if (resProductos.ok) setProductosMasVendidos(await resProductos.json());
 
-      // Cargar todos los productos y mesas para generar alertas
       try {
         const [resAllProductos, resMesas] = await Promise.all([
-          fetch('http://localhost:5000/productos'),
-          fetch('http://localhost:5000/mesas')
+          fetch(`${API_URL}/productos`),
+          fetch(`${API_URL}/mesas`)
         ]);
         if (resAllProductos.ok) {
           const allProds = await resAllProductos.json();
-          // Productos con stock bajo (<=5)
           setLowStockProducts(allProds.filter(p => (parseInt(p.stock) || 0) > 0 && (parseInt(p.stock) || 0) <= 5));
         }
         if (resMesas.ok) {
           const allMesas = await resMesas.json();
-          // Mesas en limpieza (estado incluye 'Limpieza' o 'Limpieza pendiente')
           setMesasEnLimpieza(allMesas.filter(m => m.estado && String(m.estado).toLowerCase().includes('limpieza')));
         }
-      } catch (e) {
-      }
+      } catch (e) {}
 
-      // Cargar últimos movimientos
-      const resMovimientos = await fetch('http://localhost:5000/dashboard/ultimos-movimientos');
-      if (resMovimientos.ok) {
-        setUltimosMovimientos(await resMovimientos.json());
-      }
+      const resMovimientos = await fetch(`${API_URL}/dashboard/ultimos-movimientos`);
+      if (resMovimientos.ok) setUltimosMovimientos(await resMovimientos.json());
+
     } catch (error) {
       console.error('Error cargando datos del dashboard:', error);
     }
@@ -1392,7 +1231,6 @@ function App() {
 
   useEffect(() => {
     cargarDatosDashboard();
-    // Recargar datos cada 30 segundos
     const interval = setInterval(cargarDatosDashboard, 30000);
     return () => clearInterval(interval);
   }, [cargarDatosDashboard]);
@@ -1416,8 +1254,7 @@ function App() {
 return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       
-      {/* --- SIDEBAR (BARRA LATERAL) --- */}
-      {/* En móvil: fija y z-index alto. En PC: relativa y flex. */}
+      {/* SIDEBAR */}
       <div className={`
           bg-gray-900 text-white p-4 flex-col transition-all duration-300
           ${mobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 w-64 flex shadow-2xl' : 'hidden md:flex w-48'}
@@ -1425,7 +1262,6 @@ return (
       `}>
         <div className="flex items-center justify-between mb-8">
           <div className="text-orange-500 text-2xl font-bold">ClickFood</div>
-          {/* Botón X solo visible en móvil para cerrar menú */}
           <button onClick={() => setMobileMenuOpen(false)} className="md:hidden text-gray-400 hover:text-white">
             <X size={24} />
           </button>
@@ -1443,7 +1279,6 @@ return (
         <button onClick={() => setShowLogoutConfirm(true)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-red-600 bg-red-500 transition-colors text-left mt-4 shrink-0"><LogOut size={20} /><span className="text-sm font-medium">Cerrar sesión</span></button>
       </div>
 
-      {/* --- OVERLAY OSCURO PARA MÓVIL --- */}
       {mobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -1451,11 +1286,10 @@ return (
         ></div>
       )}
 
-      {/* --- CONTENIDO PRINCIPAL --- */}
+      {/* CONTENIDO PRINCIPAL */}
       <div className="flex-1 overflow-auto flex flex-col h-screen">
         <header className="bg-white shadow-sm p-4 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
-            {/* Botón Hamburguesa (Solo visible en móvil) */}
             <button 
               onClick={() => setMobileMenuOpen(true)} 
               className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
@@ -1580,7 +1414,6 @@ return (
                 )}
               </div>
               <div className="relative h-[220px] w-full">
-                {/* ... (Contenido del gráfico IA se mantiene igual) ... */}
                 {aiLoading && <div className="absolute inset-0 bg-white/80 z-10 flex items-center justify-center"><div className="flex items-center gap-2 text-sm text-emerald-600 font-medium"><RefreshCw className="animate-spin" size={18} /> Calculando...</div></div>}
                 {modelNeedsTraining ? (
                   <div className="h-full flex flex-col items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
@@ -1599,7 +1432,7 @@ return (
                       </BarChart>
                     ) : (
                       <AreaChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-                         <defs>
+                          <defs>
                           <linearGradient id="demandGradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
                             <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
@@ -1618,50 +1451,91 @@ return (
             </div>
           </div>
 
-          {/* Tablas Inferiores (Reservas y Movimientos) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-             {/* ... (Mantén el contenido de las tablas igual) ... */}
-             <div className="bg-white rounded-xl p-6 shadow-sm">
-               <h3 className="text-lg font-semibold text-gray-800 mb-4">Próximas reservas</h3>
-               <div className="space-y-3">
-                 {proximasReservas.length > 0 ? proximasReservas.map((res, idx) => (
-                    <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                      <div>
-                        <div className="font-medium text-gray-800 text-sm">{res.nombre_cliente}</div>
-                        <div className="text-xs text-gray-500">Mesa {res.numero_mesa}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-700">{new Date(res.fecha_hora).toLocaleDateString()}</div>
-                        <div className="text-xs text-gray-500">{new Date(res.fecha_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                      </div>
-                    </div>
-                 )) : <div className="text-center text-sm text-gray-500">Sin reservas</div>}
-               </div>
-             </div>
 
-             <div className="bg-white rounded-xl p-6 shadow-sm lg:col-span-2">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Actividad reciente</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-gray-500 border-b">
-                        <th className="pb-2">Cliente</th>
-                        <th className="pb-2">Total</th>
-                        <th className="pb-2">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ultimosMovimientos.map((mov, i) => (
-                        <tr key={i} className="border-b last:border-0">
-                          <td className="py-2">{mov.nombre_cliente}</td>
-                          <td className="py-2 font-medium">${mov.total}</td>
-                          <td className="py-2"><span className="px-2 py-1 bg-gray-100 rounded text-xs">{mov.estado}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-             </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">
+            
+            {/* PRÓXIMAS RESERVAS */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Calendar size={20} className="text-orange-500"/> Próximas Reservas
+              </h3>
+              <div className="space-y-4">
+                {proximasReservas.length > 0 ? proximasReservas.map((res, idx) => (
+                   <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition-colors">
+                     <div>
+                       <div className="font-bold text-gray-800 text-sm">{res.nombre_cliente}</div>
+                       <div className="text-xs text-gray-500 font-medium bg-white px-2 py-1 rounded border border-gray-200 inline-block mt-1">
+                         Mesa {res.numero_mesa}
+                       </div>
+                     </div>
+                     <div className="text-right">
+                       <div className="text-sm font-bold text-orange-600">
+                         {new Date(res.fecha_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                       </div>
+                       <div className="text-xs text-gray-400">
+                         {new Date(res.fecha_hora).toLocaleDateString()}
+                       </div>
+                     </div>
+                   </div>
+                )) : <div className="text-center text-sm text-gray-400 py-4">Sin reservas pendientes</div>}
+              </div>
+            </div>
+
+            {/* PRODUCTOS MÁS VENDIDOS*/}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+               <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                 <Package size={20} className="text-emerald-500"/> Top Productos
+               </h3>
+               <div className="overflow-hidden">
+                 <table className="w-full text-sm">
+                   <thead className="bg-gray-100 text-gray-500 text-xs uppercase">
+                     <tr>
+                       <th className="py-2 px-3 text-left rounded-l-md">Producto</th>
+                       <th className="py-2 px-3 text-right rounded-r-md">Vendidos</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-gray-100">
+                     {productosMasVendidos.length > 0 ? productosMasVendidos.map((prod, idx) => (
+                       <tr key={idx} className="hover:bg-gray-50">
+                         <td className="py-3 px-3 font-medium text-gray-700">{prod.nombre || prod.nombre_producto || 'Desconocido'}</td>
+                         <td className="py-3 px-3 text-right font-bold text-gray-900">{prod.total || prod.total_vendido || prod.cantidad || 0}</td>
+                       </tr>
+                     )) : (
+                       <tr><td colSpan="2" className="text-center py-4 text-gray-400">No hay datos</td></tr>
+                     )}
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+
+            {/* ACTIVIDAD RECIENTE*/}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+               <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                 <Clock size={20} className="text-blue-500"/> Actividad Reciente
+               </h3>
+               <div className="overflow-x-auto">
+                 <table className="w-full text-sm">
+                   <thead className="bg-gray-100 text-gray-500 text-xs uppercase">
+                     <tr>
+                       <th className="py-2 px-3 text-left rounded-l-md">Cliente</th>
+                       <th className="py-2 px-3 text-right rounded-r-md">Total</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-gray-100">
+                     {ultimosMovimientos.map((mov, i) => (
+                       <tr key={i} className="hover:bg-gray-50 transition-colors">
+                         <td className="py-3 px-3 font-medium text-gray-800">{mov.nombre_cliente}</td>
+                         <td className="py-3 px-3 text-right font-bold text-emerald-600">${mov.total}</td>
+                       </tr>
+                     ))}
+                     {ultimosMovimientos.length === 0 && (
+                       <tr><td colSpan="2" className="text-center py-4 text-gray-400">Sin movimientos recientes</td></tr>
+                     )}
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+
           </div>
 
         </div>

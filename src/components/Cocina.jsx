@@ -1,8 +1,9 @@
+import { API_URL } from '../config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Clock, Loader, LogOut } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/pedidos';
+const API_URL_PEDIDOS = `${API_URL}/pedidos`;
 
 const Cocina = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -21,7 +22,7 @@ const Cocina = () => {
   const cargarComandas = async (mostrarCarga = true) => {
     if (mostrarCarga) setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/cocina`);
+      const res = await fetch(`${API_URL_PEDIDOS}/cocina`);
       if (res.ok) {
         const data = await res.json();
         setPedidos(data);
@@ -32,7 +33,7 @@ const Cocina = () => {
 
   const marcarCompletado = async (idPedido) => {
     try {
-      const res = await fetch(`${API_URL}/${idPedido}`, {
+      const res = await fetch(`${API_URL_PEDIDOS}/${idPedido}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: 'Completado' }) 
@@ -67,7 +68,7 @@ const Cocina = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {pedidos.length === 0 ? (
             <div className="col-span-full text-center py-20 opacity-50">
-                <div className="text-6xl mb-4">👨‍🍳</div>
+                <div className="text-6xl mb-4"></div>
                 <h2 className="text-2xl font-bold">Todo limpio, Chef {usuario?.nombre || 'Chef'}.</h2>
             </div>
           ) : (

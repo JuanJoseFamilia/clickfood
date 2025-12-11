@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, Check, ChevronLeft, ChevronRight, Utensils, AlertCircle, Gift, LogOut, Home } from 'lucide-react';
@@ -68,7 +69,7 @@ function ReservasClientePage() {
         fecha: reservaData.fecha,
         hora: reservaData.hora
       });
-      const response = await fetch(`http://localhost:5000/mesas/disponibles?${params}`);
+      const response = await fetch(`${ API_URL }/mesas/disponibles?${params}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -96,7 +97,7 @@ function ReservasClientePage() {
     const fechaHora = `${reservaData.fecha}T${reservaData.hora}:00`;
     
     try {
-      const response = await fetch('http://localhost:5000/reservas', {
+      const response = await fetch(`${ API_URL }/reservas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

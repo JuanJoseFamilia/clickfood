@@ -1,9 +1,9 @@
+import { API_URL } from '../config';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Plus, Trash2, Loader, ClipboardList, Search, Calendar, MapPin } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 
-const API_URL = 'http://localhost:5000'; 
 
 export default function Mesero() {
   // --- ESTADOS ---
@@ -19,8 +19,6 @@ export default function Mesero() {
   const [notas, setNotas] = useState('');
   const [enviando, setEnviando] = useState(false);
 
-  // SIN variable 'pedidos' para evitar errores
-  
   const [menuCategorizado, setMenuCategorizado] = useState({});
   const [cargandoMenu, setCargandoMenu] = useState(true);
   const [stats, setStats] = useState({ total: 0, cocina: 0, completados: 0 });
@@ -92,7 +90,7 @@ const fetchPedidos = async () => {
                     idEmpleadoDB === idUsuarioLocal && 
                     !notificadosRef.current.has(pedido.id_pedido)) {
                     
-                    toast.success(`✅ Orden #${pedido.id_pedido} completada`, { duration: 5000, icon: '🍽️' });
+                    toast.success(`Orden #${pedido.id_pedido} completada`, { duration: 5000, icon: '🍽️' });
                     notificadosRef.current.add(pedido.id_pedido);
                 }
             });
@@ -200,7 +198,7 @@ const fetchPedidos = async () => {
         });
         
         if (res.ok) {
-            toast.success(`✅ Orden enviada a cocina`, { position: 'bottom-center' });
+            toast.success(`Orden enviada a cocina`, { position: 'bottom-center' });
             setOrdenActual([]);
             setMesa('');
             setIdReserva('');
