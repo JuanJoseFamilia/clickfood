@@ -12,6 +12,17 @@ try:
     print("   ⚠️  Si aparece una ventana pidiendo permisos, acéptala.")
     print("   -----------------------------------------------------------------------")
     
+    # Usamos una ruta sin espacios para evitar problemas con la instalación
+    install_dir = os.path.expandvars(r"C:\.cmdstan")
+    os.makedirs(install_dir, exist_ok=True)
+
+    # Aseguramos que cmdstanpy vea la ruta sin espacios configurando
+    # variables de entorno. No todos los call-sites aceptan un argumento
+    # para directorio, así que evitamos pasar parámetros no soportados.
+    os.environ.setdefault("CMDSTAN", install_dir)
+    os.environ.setdefault("CMDSTAN_HOME", install_dir)
+    os.environ.setdefault("CMDSTAN_DIR", install_dir)
+
     # Usamos la función de alto nivel con compiler=True
     # Esto le dice a la librería: "Si estás en Windows y falta el compilador, instálalo tú"
     success = install_cmdstan(compiler=True, overwrite=True, verbose=True)

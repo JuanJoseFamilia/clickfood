@@ -7,4 +7,9 @@
   },
   "css.validate": false,
   "scss.validate": false
+  ,
+  // Evita que la extensión Python intente activar entornos (por ejemplo conda)
+  "python.terminal.activateEnvironment": false,
+  // Apunta el intérprete por defecto del workspace a la venv local
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 }
