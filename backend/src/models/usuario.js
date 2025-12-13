@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import bcrypt from 'bcryptjs'; // O 'bcrypt' según lo que tengas instalado
+import bcrypt from 'bcryptjs'; 
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,6 +14,7 @@ class Usuario {
     const { data, error } = await supabase
       .from('usuarios')
       .select('id_usuario, nombre, email, rol, activo, fecha_creacion')
+      .eq('activo', true) 
       .order('id_usuario', { ascending: false });
 
     if (error) throw error;
@@ -41,7 +42,8 @@ class Usuario {
       .from('usuarios')
       .insert([{
         ...usuario,
-        password: passwordHash
+        password: passwordHash,
+        activo: true 
       }])
       .select('id_usuario, nombre, email, rol, activo, fecha_creacion')
       .single();
@@ -50,6 +52,22 @@ class Usuario {
     return data;
   }
 
+  static async eliminar(id) {
+
+    const { error } = await supabase
+      .from('usuarios')
+      .update({ activo: false }) 
+      .eq('id_usuario', id);
+    
+    if (error) throw error;
+
+    await supabase
+        .from('clientes')
+        .update({ activo: false })
+        .eq('id_usuario', id);
+
+    return true; 
+  }
 
   static async buscarPorEmail(email) {
     console.log("--- MODELO: Buscando usuario por email:", email);
@@ -59,6 +77,7 @@ class Usuario {
       .from('usuarios')
       .select('*')
       .eq('email', email)
+      .eq('activo', true)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;

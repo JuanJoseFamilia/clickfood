@@ -19,6 +19,7 @@ static async obtenerTodas() {
                     capacidad
                 )
             `)
+            .neq('activo', false) 
             .order('fecha_hora', { ascending: true });
 
         if (error) {
@@ -83,15 +84,15 @@ static async obtenerTodas() {
     }
 
     static async eliminar(id) {
-        const { data, error } = await supabase
-            .from('reservas')
-            .delete()
-            .eq('id_reserva', id)
-            .select();
-    
-        if (error) throw error;
-    
-        return data && data.length > 0;
+const { data, error } = await supabase
+        .from('reservas')
+        .update({ activo: false }) 
+        .eq('id_reserva', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+            return data //&& data.length > 0;
     }
 
     static async verificarDisponibilidad(id_mesa, fecha_hora) {

@@ -67,11 +67,22 @@ export const actualizarCliente = async (req, res) => {
 
 // Eliminar un cliente
 export const eliminarCliente = async (req, res) => {
+    const { id } = req.params;
+
     try {
-        const resultado = await Cliente.eliminar(req.params.id);
-        if (!resultado) return res.status(404).json({ message: 'Cliente no encontrado' });
-        res.status(204).send();
+
+        await Cliente.eliminar(id);
+
+        res.status(200).json({ message: "Cliente eliminado correctamente (desactivado)" });
     } catch (error) {
-        res.status(500).json({ message: 'Error al eliminar el cliente', error: error.message });
+        console.error("Error al eliminar cliente:", error);
+        
+        if (error.code === '23503') {
+            return res.status(409).json({ 
+                message: "No se puede eliminar porque tiene pedidos asociados. (El Soft Delete falló)" 
+            });
+        }
+
+        res.status(500).json({ message: "Error interno del servidor" });
     }
 };

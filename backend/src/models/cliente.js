@@ -8,7 +8,7 @@ class Cliente {
         id_cliente, id_usuario, telefono, direccion,
         usuarios ( nombre, email, rol )
       `)
-      .eq('activo', true)
+      .eq('activo', true) // Filtra solo los activos
       .order('id_cliente', { ascending: false });
 
     if (error) throw error;
@@ -47,7 +47,8 @@ class Cliente {
       .insert([{
           id_usuario: parseInt(cliente.id_usuario),
           telefono: cliente.telefono,
-          direccion: cliente.direccion
+          direccion: cliente.direccion,
+          activo: true 
       }])
       .select().single();
     if (error) throw error;
@@ -68,13 +69,27 @@ class Cliente {
     return data;
   }
 
-static async eliminar(id) {
-    const { error } = await supabase
+  static async eliminar(id) {
+    const { data: clienteActual } = await supabase
+        .from('clientes')
+        .select('id_usuario')
+        .eq('id_cliente', id)
+        .single();
+
+    const { error: errorCliente } = await supabase
       .from('clientes')
       .update({ activo: false }) 
       .eq('id_cliente', id);
     
-    if (error) throw error;
+    if (errorCliente) throw errorCliente;
+
+    if (clienteActual && clienteActual.id_usuario) {
+        await supabase
+            .from('usuarios')
+            .update({ activo: false })
+            .eq('id_usuario', clienteActual.id_usuario);
+    }
+
     return true; 
   }
 }
